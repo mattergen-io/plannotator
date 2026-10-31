@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useCallback } from 'react';
 import { Dialog } from '@base-ui/react/dialog';
 
@@ -32,6 +33,8 @@ export const PopoutDialog: React.FC<PopoutDialogProps> = ({
   children,
   dataAttributes,
 }) => {
+
+  const portalContainer = usePortalContainer();
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
       const target = e.target as Element;
@@ -73,7 +76,7 @@ export const PopoutDialog: React.FC<PopoutDialogProps> = ({
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange} modal={false}>
-      <Dialog.Portal container={container ?? undefined}>
+      <Dialog.Portal container={container ?? portalContainer ?? undefined}>
         {/* Non-modal dialogs render no library backdrop, so we use a plain
             div for the dark scrim + blur while keeping annotation toolbars
             (which portal outside the dialog) interactive. */}

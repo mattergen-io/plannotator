@@ -1,3 +1,4 @@
+import { usePortalContainer } from "../PortalProvider";
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import type * as React from "react";
@@ -13,7 +14,8 @@ function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
 }
 
 function DropdownMenuPortal({ ...props }: MenuPrimitive.Portal.Props) {
-  return <MenuPrimitive.Portal {...props} />;
+  const portalContainer = usePortalContainer();
+  return <MenuPrimitive.Portal container={portalContainer ?? undefined} {...props} />;
 }
 
 function DropdownMenuTrigger({ ...props }: MenuPrimitive.Trigger.Props) {
@@ -32,8 +34,9 @@ function DropdownMenuContent({
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<MenuPrimitive.Positioner.Props, "side" | "sideOffset" | "align" | "alignOffset">) {
+  const portalContainer = usePortalContainer();
   return (
-    <MenuPrimitive.Portal>
+    <MenuPrimitive.Portal container={portalContainer ?? undefined}>
       <MenuPrimitive.Positioner
         className="isolate z-50 outline-none"
         side={side}
@@ -216,8 +219,9 @@ function DropdownMenuSubContent({
   ...props
 }: MenuPrimitive.Popup.Props &
   Pick<MenuPrimitive.Positioner.Props, "side" | "sideOffset" | "align" | "alignOffset">) {
+  const portalContainer = usePortalContainer();
   return (
-    <MenuPrimitive.Portal>
+    <MenuPrimitive.Portal container={portalContainer ?? undefined}>
       <MenuPrimitive.Positioner
         className="isolate z-50 outline-none"
         side={side}

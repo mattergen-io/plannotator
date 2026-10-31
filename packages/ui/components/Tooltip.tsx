@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React from 'react';
 import { Tooltip as BaseTooltip } from '@base-ui/react/tooltip';
 
@@ -101,6 +102,8 @@ export const Tooltip: React.FC<TooltipProps> = ({
   escapePassesThrough = false,
   forceOpen,
 }) => {
+
+  const portalContainer = usePortalContainer();
   const provider = React.useContext(TooltipProviderContext);
   const disableHoverablePopup = provider?.disableHoverablePopup ?? false;
   // Under a provider, an unset delay takes the provider's; alone, the shared default.
@@ -132,7 +135,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
       }
     >
       <BaseTooltip.Trigger render={children} delay={triggerDelay} />
-      <BaseTooltip.Portal container={container ?? undefined}>
+      <BaseTooltip.Portal container={container ?? portalContainer ?? undefined}>
         {/* Above the annotation toolbar (z-[100]), so a tooltip that flips toward it is never tucked under it. */}
         <BaseTooltip.Positioner side={side} align={align} sideOffset={sideOffset} className="isolate z-[110]">
           {/* A borderless float (owner's design-system ruling q4): the shadow (--float-shadow, theme.css) separates

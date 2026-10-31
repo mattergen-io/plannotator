@@ -1,0 +1,18 @@
+.bb-plannotator-panel { display:flex; flex-direction:column; height:100%; min-height:0; color:var(--foreground); background:var(--background); font-family:var(--font-sans,system-ui); font-size:13px; }
+.bb-plannotator-panel .bb-review-path { display:flex; align-items:center; gap:6px; padding:10px; border-bottom:1px solid var(--border); }
+.bb-plannotator-panel input { min-width:0; flex:1; border:1px solid var(--border); border-radius:5px; padding:6px 8px; background:var(--input); color:var(--foreground); }
+.bb-plannotator-panel button, .bb-plannotator-panel select { border:1px solid var(--border); border-radius:5px; padding:5px 8px; background:var(--card); color:var(--foreground); cursor:pointer; font:inherit; }
+.bb-plannotator-panel button:hover { background:var(--muted); }
+.bb-plannotator-panel button:disabled { opacity:.45; cursor:default; }
+.bb-plannotator-panel button:focus-visible, .bb-plannotator-panel input:focus-visible, .bb-plannotator-panel select:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.bb-plannotator-panel .bb-review-source, .bb-plannotator-panel .bb-review-version { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; font-size:11px; color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-review-source span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bb-plannotator-panel .bb-review-actions { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; border-bottom:1px solid var(--border); }
+.bb-plannotator-panel .bb-review-approve { border-color:var(--primary); }
+.bb-plannotator-panel .bb-review-document { flex:1; min-height:140px; overflow:auto; padding:4px 14px 24px; position:relative; }
+.bb-plannotator-panel .bb-review-comments { flex:0 1 28%; min-height:70px; max-height:230px; overflow:auto; border-top:1px solid var(--border); }
+.bb-plannotator-panel .bb-review-empty, .bb-plannotator-panel .bb-review-empty-comments { padding:18px; color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-review-status, .bb-plannotator-panel .bb-review-error { padding:7px 10px; overflow-wrap:anywhere; border-bottom:1px solid var(--border); font-size:12px; }
+.bb-plannotator-panel .bb-review-error { color:#f0a9a9; }
+.bb-plannotator-portals { position:fixed; inset:0; pointer-events:none; z-index:1000; font-size:14px; line-height:1.5; }
+.bb-plannotator-portals > * { pointer-events:auto; }

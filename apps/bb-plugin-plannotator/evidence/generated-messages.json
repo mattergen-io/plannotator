@@ -1,0 +1,4 @@
+{
+  "feedback": "Review feedback for \"samples/plannotator-review.md\" at SHA-256 baaab95921e4a2c9134076b4bf2d3f6526ece01991fc4c389c21658b403ac798.\n\n# Document feedback\n\nI've reviewed this document and have 1 piece of feedback:\n\n## 1. General feedback about the document\n\nClarify that approval does not authorize implementation.\n\n---\n\n\nRevise this document to address the feedback using your normal file tools. Check its current contents before editing. Stay within document revision; do not implement code or advance another stage unless the user requests it.",
+  "approval": "The user approved \"samples/plannotator-review.md\" at SHA-256 baaab95921e4a2c9134076b4bf2d3f6526ece01991fc4c389c21658b403ac798. This approval applies only to those document contents. Acknowledge the approval and wait for the user\u2019s next request. It does not authorize implementation or another stage."
+}

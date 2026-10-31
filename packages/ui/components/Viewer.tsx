@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import { generateId } from '../utils/generateId';
 import React, { useRef, useState, useEffect, useLayoutEffect, useMemo, forwardRef, useImperativeHandle, useCallback, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
@@ -117,6 +118,8 @@ export interface ViewerAnnotationHeaderConfig {
 
 /** Public properties for the Markdown document Viewer. */
 export interface ViewerProps {
+  /** Host identity for unsubmitted comment drafts; scopes identical paths in different sessions. */
+  commentDraftKey?: string;
   /**
    * Opt-in host capability, passed straight through to the selection
    * toolbars: the host's own commands for the current selection, rendered as
@@ -860,7 +863,9 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
   onVimHudKeyPanelChange,
   onHostDraft,
   belowTitle,
+  commentDraftKey,
 }, ref) => {
+  const portalContainer = usePortalContainer();
   // Annotation authoring is off when read-only, and when the host only wants
   // answers (`answerOnly`); question cards and checkboxes follow `readOnly`.
   const authoringOff = readOnly || answerOnly;
@@ -1516,7 +1521,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
     setViewerCommentPopover(null);
   }, []);
 
-  const commentDraftScope = linkedDocInfo?.filepath ?? sourceInfo ?? markdown.slice(0, 120);
+  const commentDraftScope = commentDraftKey ?? linkedDocInfo?.filepath ?? sourceInfo ?? markdown.slice(0, 120);
 
   const codePathValidation = useValidatedCodePaths(markdown, codePathBaseDir, disableCodePathValidation);
 
@@ -2240,7 +2245,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
           regions={regionHost}
           onClose={closeLightbox}
         />,
-        document.body
+        portalContainer ?? document.body
       )}
     </div>
     </DiagramAnchorClaimsContext.Provider>

@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { SelectionAction } from '../utils/selectionActions';
@@ -80,6 +81,7 @@ export const FloatingSelectionActionsPicker: React.FC<{
   onSelect: (action: SelectionAction) => void;
   onDismiss: () => void;
 }> = ({ anchorEl, actions, onSelect, onDismiss }) => {
+  const portalContainer = usePortalContainer();
   const [position, setPosition] = useState<{ top: number; left: number; flipAbove: boolean } | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -168,6 +170,6 @@ export const FloatingSelectionActionsPicker: React.FC<{
         />
       </div>
     </div>,
-    document.body,
+    portalContainer ?? document.body,
   );
 };

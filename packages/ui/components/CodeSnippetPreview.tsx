@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ensureHighlight, highlightToHtml } from "../utils/codeHighlight";
@@ -65,6 +66,7 @@ export const CodeSnippetPreview: React.FC<CodeSnippetPreviewProps> = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
+  const portalContainer = usePortalContainer();
   const allLines = contents.split('\n');
   const targetStart = Math.max(0, line - 1);
   const targetEnd = Math.min(allLines.length, lineEnd ?? line);
@@ -169,6 +171,6 @@ export const CodeSnippetPreview: React.FC<CodeSnippetPreviewProps> = ({
         </table>
       </div>
     </div>,
-    document.body,
+    portalContainer ?? document.body,
   );
 };

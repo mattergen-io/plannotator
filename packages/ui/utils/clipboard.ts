@@ -1,3 +1,8 @@
+type ClipboardWriter = (text: string) => Promise<boolean>;
+let hostClipboardWriter: ClipboardWriter | null = null;
+/** Embedders can use their platform’s clipboard API; null restores browser behavior. */
+export function setClipboardWriter(writer: ClipboardWriter | null): void { hostClipboardWriter = writer; }
+
 function copyTextWithFallback(text: string, focusOwner?: HTMLElement): boolean {
   const activeElement = document.activeElement instanceof HTMLElement
     ? document.activeElement
@@ -70,6 +75,10 @@ export function copyTextPreservingFocus(
   text: string,
   focusOwner: HTMLElement,
 ): void {
+  if (hostClipboardWriter) {
+    try { void hostClipboardWriter(text).catch(() => {}); } catch {}
+    return;
+  }
   try {
     const clipboardWrite = navigator.clipboard?.writeText(text);
     if (clipboardWrite) {
@@ -92,6 +101,9 @@ export function copyTextPreservingFocus(
  * a copy strategy succeeded and `false` otherwise. Never throws.
  */
 export async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (hostClipboardWriter) {
+    try { return await hostClipboardWriter(text); } catch { return false; }
+  }
   try {
     const clipboardWrite = navigator.clipboard?.writeText(text);
     if (clipboardWrite) {

@@ -33,6 +33,8 @@ This file is a map. The full guidance lives in focused guides under [`docs/agent
 - [`server-and-storage.md`](docs/agent-guides/server-and-storage.md): archive, Server API tables and guards, plan history, feedback archive, plan diff.
 - [`guides-and-shared-ui.md`](docs/agent-guides/guides-and-shared-ui.md): portable Guided Reviews, data types, parser, annotation system, question blocks, WebMCP, shortcuts, sharing, settings, syntax highlighting.
 
+- [`bb-plugin.md`](docs/agent-guides/bb-plugin.md): native BB document review, integration boundary, and implementation progress.
+
 ## Where new docs go
 
 Keep this file a map: add no feature detail here. Put a new section in the guide for its area (the list above): an env var in `environment.md`, an endpoint in the matching Server API table in `server-and-storage.md`, Inbox behavior in the matching `inbox-*.md` (and a line in `inbox.md` for a new Inbox guide), a shared UI or format change in `guides-and-shared-ui.md`. A new guide gets one line in the list above. `tests/agents-md-size.test.ts` fails when this file grows past its budget or links to a guide that does not exist.

@@ -1908,3 +1908,7 @@ body:has([data-popout="true"]) [data-sidebar-tabs="true"] {
     animation: none;
   }
 }
+
+/* CSS assets keep reusable components portable across host bundlers. */
+.pn-tater-sitting { background-image: url("./sprite_package_new/sprite.png"); }
+.pn-tater-pullup { background-image: url("./sprite_package_pulluphang/sprite.png"); }

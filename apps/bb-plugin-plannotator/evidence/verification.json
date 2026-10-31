@@ -1,0 +1,60 @@
+{
+  "capturedAt": "2026-10-31T01:10:27.708722+00:00",
+  "bbVersion": "0.48.1",
+  "sdkVersion": "0.6.104",
+  "checks": [
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator test",
+      "result": "18 passed"
+    },
+    {
+      "command": "bun run --cwd packages/ui typecheck",
+      "result": "passed"
+    },
+    {
+      "command": "DOM_TESTS=1 bun test ./packages/ui/components/AnnotationToolbar.selectionActions.test.tsx ./packages/ui/components/Viewer.documentHeader.test.tsx ./packages/ui/components/CommentPopover.forcedDialog.test.tsx ./packages/ui/utils/clipboard.test.ts",
+      "result": "40 passed"
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator build",
+      "result": "passed"
+    },
+    {
+      "command": "bb plugin reload plannotator",
+      "result": "running"
+    }
+  ],
+  "liveChecks": {
+    "openedWorkspaceMarkdown": true,
+    "globalCommentSaved": true,
+    "selectionCommentSaved": true,
+    "feedbackAddedToNativeComposer": true,
+    "composerRestoredAfterCheck": true,
+    "reviewedBaselineReset": true,
+    "staleSendRejected": "The document changed on disk. Refresh and review the latest version before sending.",
+    "earlierVersionPreservedComments": 2,
+    "currentVersionRefreshed": true,
+    "changesViewRendered": true,
+    "typescriptFenceRendered": true,
+    "mermaidDiagramRendered": true
+  },
+  "freshAgentChecks": {
+    "feedback": {
+      "expectedOriginalSha256": "baaab95921e4a2c9134076b4bf2d3f6526ece01991fc4c389c21658b403ac798",
+      "resultSha256": "9a5ad471f8e6e9585720680a9f289f61b4e7404b2298f795b3b4c310c1b8a75f",
+      "documentChanged": true,
+      "implementationUntouched": true
+    },
+    "approve": {
+      "expectedOriginalSha256": "baaab95921e4a2c9134076b4bf2d3f6526ece01991fc4c389c21658b403ac798",
+      "resultSha256": "baaab95921e4a2c9134076b4bf2d3f6526ece01991fc4c389c21658b403ac798",
+      "documentChanged": false,
+      "implementationUntouched": true
+    }
+  },
+  "validationBoundary": "Thread send/queue, duplicate suppression, uncertain delivery, and automatic refresh were exercised through the official SDK harness with real SQLite. Live BB checks exercised the viewer, comments, composer, baseline, stale-send rejection, and version history; no successful test message was sent to a live BB conversation."
+}

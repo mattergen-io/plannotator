@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useState, useEffect, useMemo, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import type { ImageAttachment } from '../types';
@@ -232,6 +233,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
   zIndex,
   autoFocus = true,
 }) => {
+  const portalContainer = usePortalContainer();
   const visibleBounds = useVisibleViewportBounds(16);
   const coarsePointer = hasPrimaryCoarsePointer();
   const prefersExpandedComposer = shouldUseExpandedComposer({
@@ -804,7 +806,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
           </div>
         </div>
       </div>,
-      document.body
+      portalContainer ?? document.body
     );
   }
 
@@ -960,7 +962,7 @@ export const CommentPopover: React.FC<CommentPopoverProps> = ({
       </div>
       </div>
     </>,
-    document.body
+    portalContainer ?? document.body
   );
 };
 

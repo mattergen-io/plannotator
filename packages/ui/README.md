@@ -592,3 +592,7 @@ npm install @plannotator/ui @plannotator/core
 ## The one rule
 
 **Do not reimplement the document UI from scratch.** A prior from-scratch rewrite broke the app and was reverted. The supported path is always: keep these components as-is and add a seam where a host needs different backend behavior. Never delete working Plannotator code until a human has confirmed parity in the browser.
+
+## Embedded portal placement
+
+`PortalProvider` from `@plannotator/ui/components/PortalProvider` takes an optional host-owned `container` for floating document controls. The BB plugin provides a styled portal root outside panel clipping. Without a provider, existing controls keep their `document.body` placement. `setClipboardWriter` from `utils/clipboard` lets an embedding host supply its native text clipboard writer; passing null restores the standalone behavior.

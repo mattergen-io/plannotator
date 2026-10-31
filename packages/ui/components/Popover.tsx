@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import React from 'react';
 
@@ -8,8 +9,10 @@ const PopoverContent = React.forwardRef<
   HTMLDivElement,
   PopoverPrimitive.Popup.Props &
     Pick<PopoverPrimitive.Positioner.Props, 'side' | 'sideOffset' | 'align' | 'alignOffset'>
->(({ className, side, align = 'center', sideOffset = 6, alignOffset, children, ...props }, ref) => (
-  <PopoverPrimitive.Portal>
+>(({ className, side, align = 'center', sideOffset = 6, alignOffset, children, ...props }, ref) => {
+  const portalContainer = usePortalContainer();
+  return (
+  <PopoverPrimitive.Portal container={portalContainer ?? undefined}>
     <PopoverPrimitive.Positioner
       side={side}
       align={align}
@@ -26,7 +29,8 @@ const PopoverContent = React.forwardRef<
       </PopoverPrimitive.Popup>
     </PopoverPrimitive.Positioner>
   </PopoverPrimitive.Portal>
-));
+);
+});
 
 PopoverContent.displayName = 'PopoverContent';
 

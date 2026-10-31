@@ -1,3 +1,4 @@
+import { usePortalContainer } from "../PortalProvider";
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { buildCsv } from './TableBlock';
@@ -25,6 +26,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = ({
   onMouseLeave,
   onExpand,
 }) => {
+  const portalContainer = usePortalContainer();
   const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
   const [copiedMd, setCopiedMd] = useState(false);
   const [copiedCsv, setCopiedCsv] = useState(false);
@@ -129,7 +131,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = ({
         )}
       </div>
     </div>,
-    document.body,
+    portalContainer ?? document.body,
   );
 };
 

@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { AnnotationType } from "../types";
 import { createPortal } from "react-dom";
@@ -94,6 +95,7 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
   onMouseEnter,
   onMouseLeave,
 }) => {
+  const portalContainer = usePortalContainer();
   const [position, setPosition] = useState<{ top: number; left?: number; right?: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [richCopied, setRichCopied] = useState<RichCopyOutcome | false>(false);
@@ -398,7 +400,7 @@ export const AnnotationToolbar: React.FC<AnnotationToolbarProps> = ({
         />
       </div>
     </div>,
-    document.body
+    portalContainer ?? document.body
   );
 };
 

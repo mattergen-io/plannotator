@@ -1,0 +1,48 @@
+{
+  "name": "bb-plugin-plannotator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT OR Apache-2.0",
+  "engines": {
+    "bb": ">=0.48.1",
+    "bbPluginSdk": ">=0.6.104"
+  },
+  "bb": {
+    "name": "Plannotator",
+    "description": "Review workspace documents, annotate them, and send feedback to native BB conversations.",
+    "branding": {
+      "icon": "ClipboardCheck"
+    },
+    "server": "./server.ts",
+    "app": "./app.tsx",
+    "skills": []
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "bun run build:styles && bb plugin build",
+    "build:styles": "bun run --cwd ../../packages/ui build:css && bun scripts/scope-styles.ts"
+  },
+  "dependencies": {
+    "@plannotator/ui": "workspace:*",
+    "@plannotator/core": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@get-bb/plugin-sdk": "0.6.104",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/better-sqlite3": "^7.6.12",
+    "better-sqlite3": "^12.0.0",
+    "hono": "^4.11.9",
+    "jsdom": "^27.0.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.1",
+    "cron-parser": "^5.5.0"
+  }
+}

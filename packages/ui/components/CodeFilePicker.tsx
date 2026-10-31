@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDismissOnOutsideAndEscape } from "../hooks/useDismissOnOutsideAndEscape";
@@ -12,6 +13,7 @@ export const CodeFilePicker: React.FC<{
 	onPick: (path: string) => void;
 	onDismiss: () => void;
 }> = ({ anchorEl, matches, onPick, onDismiss }) => {
+  const portalContainer = usePortalContainer();
 	const popoverRef = useRef<HTMLDivElement>(null);
 	const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -59,6 +61,6 @@ export const CodeFilePicker: React.FC<{
 				))}
 			</ul>
 		</div>,
-		document.body,
+		portalContainer ?? document.body,
 	);
 };

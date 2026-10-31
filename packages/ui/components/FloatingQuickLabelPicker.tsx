@@ -1,3 +1,4 @@
+import { usePortalContainer } from "./PortalProvider";
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { type QuickLabel, getQuickLabels, quickLabelIndexForDigit } from '../utils/quickLabels';
@@ -49,6 +50,7 @@ export const FloatingQuickLabelPicker: React.FC<FloatingQuickLabelPickerProps> =
   onSelect,
   onDismiss,
 }) => {
+  const portalContainer = usePortalContainer();
   const [position, setPosition] = useState<{ top: number; left: number; flipAbove: boolean } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const quickLabels = useMemo(() => getQuickLabels(), []);
@@ -142,6 +144,6 @@ export const FloatingQuickLabelPicker: React.FC<FloatingQuickLabelPickerProps> =
         <QuickLabelDropdown labels={quickLabels} onSelect={onSelect} animate />
       </div>
     </div>,
-    document.body
+    portalContainer ?? document.body
   );
 };
