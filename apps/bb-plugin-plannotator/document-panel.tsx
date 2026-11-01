@@ -1,7 +1,7 @@
 import type {FactoryView} from "./factory/contracts";
 import { FactoryControls } from "./factory/controls";
 import { useEffect, useRef, useState } from "react";
-import { useBbNavigate, useComposer, useRealtime, useRealtimeConnectionState, useRpc } from "@get-bb/plugin-sdk/app";
+import { useReviewPlatform, useReviewRefresh } from "./review-platform";
 import { Viewer, type ViewerHandle } from "@plannotator/ui/components/Viewer";
 import { RenderedMarkdown } from "@plannotator/ui/components/RenderedMarkdown";
 import { AnnotationPanel } from "@plannotator/ui/components/AnnotationPanel";
@@ -12,16 +12,14 @@ import { useHighlightProjection } from "./use-highlight-projection";
 import { useOffscreenTables } from "./use-offscreen-tables";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
-import { CHANNEL, rpcContract, targetOf, feedbackSelection } from "./contracts";
+import { targetOf, feedbackSelection } from "./contracts";
 import { SpecTree } from "./spec-tree";
 import { SpecSelector } from "./spec-selector";
 
 export function DocumentPanel({ threadId, initialPath }: { threadId: string; initialPath?: string }) {
-  const rpc = useRpc<typeof rpcContract>(), connection = useRealtimeConnectionState();
-  const review = useReview(threadId, initialPath, rpc, connection), composer = useComposer(), navigate = useBbNavigate();
-  useRealtime(CHANNEL, value => {
-    if (value && typeof value === "object" && !Array.isArray(value) && "threadId" in value && value.threadId === threadId) review.refresh();
-  });
+  const platform = useReviewPlatform();
+  const review = useReview(threadId, initialPath, platform.reviewRpc, "connected");
+  useReviewRefresh(review.refresh);
   const [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<EditorMode>("selection"), [inputMethod, setInputMethod] = useState<InputMethod>("drag");
   const [notesOpen, setNotesOpen] = useState(false);
@@ -60,8 +58,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   function addToChat() {
     void review.run(async () => {
       const { text } = await prepare();
-      if (composer.scope.kind !== "thread" || composer.scope.threadId !== threadId) throw new Error("Open this thread’s composer before adding feedback.");
-      composer.insert(text, { at: "end", block: true }); composer.focus(); review.setNotice("Feedback added to your chat draft.");
+      await platform.insertDraft(text); review.setNotice("Feedback added to your chat draft.");
     });
   }
   function send(action: "feedback" | "approve", resend = false) {
@@ -76,8 +73,8 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   }
   const historical = !!doc && doc.sha256 !== doc.currentSha256;
   const selectionActions = doc ? [{ id: "add-to-chat", label: "Add to chat", onSelect: (context: { text: string }) => {
-    if (composer.scope.kind !== "thread" || composer.scope.threadId !== threadId) return;
-    composer.insert(`From ${JSON.stringify(doc.path)} (SHA-256 ${doc.sha256}):\n\n${context.text.split("\n").map(line => `> ${line}`).join("\n")}`, { at: "end", block: true }); composer.focus();
+    void platform.insertDraft(`From ${JSON.stringify(doc.path)} (SHA-256 ${doc.sha256}):\n\n${context.text.split("\n").map(line => `> ${line}`).join("\n")}`).catch(error => review.setNotice(String(error)));
+
   } }] : [];
   return <div className="bb-plannotator-ui bb-plannotator-panel theme-plannotator">
     <div className="bb-review-workspace">
@@ -99,11 +96,6 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
             {doc.versions.map(version => <option key={version.sha256} value={version.sha256}>{version.sha256 === doc.currentSha256 ? "Current" : "Earlier"} · {version.sha256.slice(0,8)} · {version.commentCount} comments</option>)}
           </select></label>
       <div className="bb-review-actions">
-        <button title="Open an experimental isolated review in BB Browser" onClick={() => {
-          const url = new URL("/api/v1/plugins/plannotator/http/isolated", location.origin);
-          url.searchParams.set("thread", threadId); url.searchParams.set("path", doc.path);
-          url.hash = crypto.randomUUID(); navigate.openUrl(url.href);
-        }}>Isolated preview</button>
         <button onClick={addToChat} disabled={review.busy || !feedbackCount || historical}>Add to chat</button>
         <button onClick={() => send("feedback")} disabled={review.busy || !feedbackCount || historical}>Send feedback</button>
         <button title="Mark only the displayed document as reviewed" disabled={review.busy || historical || !processed?.value} onClick={() => void review.run(async () => {

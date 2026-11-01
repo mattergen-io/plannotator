@@ -3,7 +3,10 @@ import {factoryContract} from "../factory/contracts";
 import React from "react";
 import { cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { loadPluginApp, renderSlot } from "@get-bb/plugin-sdk/testing/app";
+import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
+import { useComposer, useRpc, useRealtime, useBbNavigate, experimental_ProviderModelPicker } from "@get-bb/plugin-sdk/app";
+import { DocumentPanel } from "../document-panel";
+import { ReviewPlatformContext, type ReviewPlatform } from "../review-platform";
 import type { ExperimentalThreadActionTabProps } from "@get-bb/plugin-sdk/app";
 import { AnnotationType } from "@plannotator/ui/types";
 import { CHANNEL, rpcContract, documentSchema, annotationsSchema, summarizeDocument, insideFolder } from "../contracts";
@@ -11,7 +14,14 @@ import { CHANNEL, rpcContract, documentSchema, annotationsSchema, summarizeDocum
 vi.mock("@plannotator/ui/components/Viewer", () => ({ Viewer: ({ markdown, documentChanges, onAddAnnotation }: { markdown: string; documentChanges?: { type: string }[]; onAddAnnotation: (value: unknown) => void }) => <div data-testid="document-viewer" data-changes={documentChanges?.map(block => block.type).join(",")}>{markdown}<button onClick={() => onAddAnnotation({ id: "note-1", blockId: "block-1", startOffset: 0, endOffset: 0, type: AnnotationType.GLOBAL_COMMENT, originalText: "", text: "Clarify acceptance criteria", createdA: 1, images: undefined, mentions: undefined })}>Add test comment</button></div> }));
 vi.mock("@plannotator/ui/components/AnnotationPanel", () => ({ AnnotationPanel: () => null }));
 const panelContract={...rpcContract,factoryStatus:factoryContract.factoryStatus};
-const app = await loadPluginApp(() => import("../app"));
+function PanelHost({ threadId, params }: ExperimentalThreadActionTabProps) {
+  const rpc = useRpc<typeof panelContract>(), composer = useComposer(), navigate = useBbNavigate();
+  const listeners = React.useRef(new Set<() => void>());
+  useRealtime(CHANNEL, value => { if (value && typeof value === "object" && !Array.isArray(value) && "threadId" in value && value.threadId === threadId) listeners.current.forEach(listener => listener()); });
+  const platform = React.useMemo(() => ({ reviewRpc: rpc, factoryRpc: rpc, insertDraft: async (text: string) => { if (composer.scope.kind !== "thread" || composer.scope.threadId !== threadId) throw new Error("Open this thread’s composer before adding feedback."); composer.insert(text, { at: "end", block: true }); composer.focus(); }, openThread: (id: string, split?: boolean) => navigate.toThread(id, { split }), openFile: (environmentId: string, path: string) => navigate.experimental_openFilePreview({ target: { kind: "workspace", environmentId, path }, location: null }), ModelPicker: experimental_ProviderModelPicker, subscribe: (listener: () => void) => { listeners.current.add(listener); return () => { listeners.current.delete(listener); }; } }) as unknown as ReviewPlatform, [rpc, composer, navigate, threadId]);
+  const path = params && typeof params === "object" && !Array.isArray(params) && typeof params.path === "string" ? params.path : undefined;
+  return <ReviewPlatformContext.Provider value={platform}><DocumentPanel threadId={threadId} initialPath={path}/></ReviewPlatformContext.Provider>;
+}
 afterEach(cleanup);
 function mount(composerThread = "thread-1", baseline: string | null = null, nested = false) {
   const original = documentSchema.parse({ id: "a".repeat(64), threadId: "thread-1", path: "requirements.md", hostId: "host-1", checkoutRoot: "/repo", environmentId: "environment-1",
@@ -25,7 +35,7 @@ function mount(composerThread = "thread-1", baseline: string | null = null, nest
   const prepare = vi.fn(({ id, revision }: { id: string; revision: number }) => { expect(revision).toBe(find(id).revision); return { text: "Generated document feedback" }; });
   const send = vi.fn(() => ({ status: "sent" as const, error: null }));
   const open = vi.fn(({ path }: { path: string }) => { selectedPath = path; return path === "requirements.md" ? document : other; });
-  const slot = renderSlot<ExperimentalThreadActionTabProps, typeof panelContract>(app.tabs[0]! as { component: React.ComponentType<ExperimentalThreadActionTabProps> }, { threadId: "thread-1", environment: { id: "environment-1" }, params: null }, {
+  const slot = renderSlot<ExperimentalThreadActionTabProps, typeof panelContract>({ component: PanelHost }, { threadId: "thread-1", environment: { id: "environment-1" }, params: null }, {
     experimental_rpcContract: panelContract, pluginId: "plannotator", context: { threadId: "thread-1" },
     composer: { text: "Existing prompt", attachmentCount: 2, scope: { kind: "thread", threadId: composerThread } },
     rpc: {
@@ -151,7 +161,7 @@ describe("native composer and refresh", () => {
     const tree = slot.getByRole("navigation", { name: "Spec documents" });
     expect(tree.textContent).not.toContain("requirements.md");
     expect(tree.textContent).toContain("empty");
-    const link = slot.getByRole("link", { name: "schema.json" });
+    const link = slot.getByRole("button", { name: "schema.json" });
     fireEvent.click(link);
     expect(JSON.stringify(slot.inspection.navigateCalls)).toContain("nested/assets/schema.json");
     expect(JSON.stringify(slot.inspection.navigateCalls)).toContain("environment-1");

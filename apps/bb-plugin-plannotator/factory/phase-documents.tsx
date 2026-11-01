@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useRpc } from "@get-bb/plugin-sdk/app";
-import { factoryContract, type FactoryView } from "./contracts";
+import { useReviewPlatform } from "../review-platform";
+import { type FactoryView } from "./contracts";
 import { phases, type Phase } from "./model";
 export function PhaseDocuments({
   view,
@@ -15,7 +15,7 @@ export function PhaseDocuments({
   busy: boolean;
   act: (work: () => Promise<unknown>) => Promise<void>;
 }) {
-  const rpc = useRpc<typeof factoryContract>(),
+  const rpc = useReviewPlatform().factoryRpc,
     state = view.state!;
   const [previews, setPreviews] = useState<
     { key: string; title: string; pack: string }[]

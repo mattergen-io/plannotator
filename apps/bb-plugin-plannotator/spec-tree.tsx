@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { experimental_FileLink as FileLink } from "@get-bb/plugin-sdk/app";
+import { useReviewPlatform } from "./review-platform";
 import { buildDiffFileTree, type DiffFileTreeNode } from "@plannotator/ui/utils/diffFileTree";
 import { needsReview, type SpecSet, type SetFile } from "./contracts";
 
@@ -14,6 +14,7 @@ function pending(node: DiffFileTreeNode<TreeEntry>): number {
 function Rows({ nodes, selectedPath, environmentId, busy, onSelect }: {
   nodes: DiffFileTreeNode<TreeEntry>[]; selectedPath: string | null; environmentId: string; busy: boolean; onSelect: (path: string) => void;
 }) {
+  const platform = useReviewPlatform();
   return <ul>{nodes.map(node => {
     const file = node.file, review = file?.review;
     return <li key={node.path}>
@@ -25,9 +26,9 @@ function Rows({ nodes, selectedPath, environmentId, busy, onSelect }: {
           <span className="bb-review-tree-name">{node.name}</span>
           <span className={`bb-review-file-status bb-review-file-${review.status}`}>{labels[review.status]}</span>
           {!!review.commentCount && <span className="bb-review-comment-count">{review.commentCount} {review.commentCount === 1 ? "comment" : "comments"}</span>}
-        </button> : <FileLink className="bb-review-tree-file" target={{ kind: "workspace", environmentId, path: file!.fullPath }} title={file!.fullPath}>
+        </button> : <button type="button" className="bb-review-tree-file" onClick={() => platform.openFile(environmentId, file!.fullPath)} title={file!.fullPath}>
           <span className="bb-review-tree-name">{node.name}</span>
-        </FileLink>}
+        </button>}
       {review?.error && <p className="bb-review-file-error">{review.error}</p>}
     </li>;
   })}</ul>;

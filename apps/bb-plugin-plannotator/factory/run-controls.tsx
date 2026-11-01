@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
-import {
-  useRpc,
-  useBbNavigate,
-  experimental_ProviderModelPicker as ModelPicker,
-} from "@get-bb/plugin-sdk/app";
-import { factoryContract, type FactoryView } from "./contracts";
+import { useReviewPlatform } from "../review-platform";
+import { type FactoryView } from "./contracts";
 import { defaultRoles, type Role } from "./model";
 export function RunControls({
   view,
@@ -21,8 +17,7 @@ export function RunControls({
   busy: boolean;
   act: (work: () => Promise<unknown>) => Promise<void>;
 }) {
-  const rpc = useRpc<typeof factoryContract>(),
-    navigate = useBbNavigate();
+  const platform = useReviewPlatform(), rpc = platform.factoryRpc, ModelPicker = platform.ModelPicker;
   const [worker, setWorker] = useState<Role>(defaultRoles.worker),
     [reviewer, setReviewer] = useState<Role>(defaultRoles.reviewer),
     [command, setCommand] = useState(""),
@@ -50,11 +45,7 @@ export function RunControls({
               disabled={busy || !!active}
               value={worker}
               onChange={setWorker}
-              routing={
-                environmentId
-                  ? { kind: "environment", environmentId }
-                  : undefined
-              }
+              environmentId={environmentId}
             />
           </label>
           <label>
@@ -63,11 +54,7 @@ export function RunControls({
               disabled={busy || !!active}
               value={reviewer}
               onChange={setReviewer}
-              routing={
-                environmentId
-                  ? { kind: "environment", environmentId }
-                  : undefined
-              }
+              environmentId={environmentId}
             />
           </label>
         </div>
@@ -196,9 +183,7 @@ export function RunControls({
                 {task.state.workerId && (
                   <button
                     onClick={() =>
-                      navigate.toThread(task.state.workerId!, {
-                        split: true,
-                      })
+                      platform.openThread(task.state.workerId!, true)
                     }
                   >
                     Open worker
@@ -207,9 +192,7 @@ export function RunControls({
                 {task.state.reviewerId && (
                   <button
                     onClick={() =>
-                      navigate.toThread(task.state.reviewerId!, {
-                        split: true,
-                      })
+                      platform.openThread(task.state.reviewerId!, true)
                     }
                   >
                     Open reviewer

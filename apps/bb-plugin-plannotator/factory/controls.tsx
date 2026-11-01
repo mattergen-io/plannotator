@@ -2,10 +2,10 @@ import { ImportSpec } from "./import-spec";
 import { PhaseDocuments } from "./phase-documents";
 import { RunControls } from "./run-controls";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRpc, useRealtime, useBbNavigate } from "@get-bb/plugin-sdk/app";
-import { factoryContract, type FactoryView } from "./contracts";
+import { useReviewPlatform, useReviewRefresh } from "../review-platform";
+import { type FactoryView } from "./contracts";
 import { type Phase } from "./model";
-import { CHANNEL } from "../contracts";
+
 
 export function FactoryControls({
   threadId,
@@ -24,8 +24,8 @@ export function FactoryControls({
   onView: (view: FactoryView | null) => void;
   onRefresh: () => void;
 }) {
-  const rpc = useRpc<typeof factoryContract>();
-  const navigate = useBbNavigate();
+  const platform = useReviewPlatform();
+  const rpc = platform.factoryRpc;
   const [view, setView] = useState<FactoryView | null>(null),
     [error, setError] = useState<string | null>(null),
     [busy, setBusy] = useState(false),
@@ -61,16 +61,7 @@ export function FactoryControls({
       generation.current++;
     };
   }, [refresh]);
-  useRealtime(CHANNEL, (value) => {
-    if (
-      value &&
-      typeof value === "object" &&
-      !Array.isArray(value) &&
-      "threadId" in value &&
-      value.threadId === threadId
-    )
-      void refresh();
-  });
+  useReviewRefresh(refresh);
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
@@ -113,7 +104,7 @@ export function FactoryControls({
     return (
       <section className="bb-factory" aria-label="Spec workflow and factory">
         <p>This spec is associated with another planning thread.</p>
-        <button onClick={() => navigate.toThread(state.threadId)}>
+        <button onClick={() => platform.openThread(state.threadId)}>
           Open planning thread
         </button>
       </section>

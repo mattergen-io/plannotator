@@ -16,7 +16,7 @@ describe("iframe review bridge", () => {
     const frame = slot.getByTitle("Plannotator document review") as HTMLIFrameElement;
     const url = new URL(frame.src);
     const send = (overrides: Record<string, unknown> = {}, origin = url.origin) => window.dispatchEvent(new MessageEvent("message", {
-      source: frame.contentWindow, origin, data: { type: "plannotator-draft", nonce: url.hash.slice(1), threadId: "thread-1", id: "request", text: "feedback", ...overrides },
+      source: frame.contentWindow, origin, data: { type: "plannotator-request", action: "insert-draft", nonce: url.hash.slice(1), threadId: "thread-1", id: "request", text: "feedback", ...overrides },
     }));
     return { slot, url, send };
   }

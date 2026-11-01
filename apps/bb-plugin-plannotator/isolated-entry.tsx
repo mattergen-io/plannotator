@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import { configurePlannotatorUI } from "@plannotator/ui/configure";
 import { setMermaidRenderOverride } from "@plannotator/ui/utils/diagram-render";
 import { renderMermaidInSandbox } from "./mermaid-sandbox";
-import { IsolatedReview } from "./isolated-review";
+import { DocumentPanel } from "./document-panel";
+import { IframePlatform } from "./iframe-platform";
 import styles from "./document-styles.css?raw";
 import panel from "./panel.css?raw";
 
@@ -25,4 +26,4 @@ window.addEventListener("message", event => {
   }
 });
 if (!threadId || !/^[a-f0-9-]{36}$/i.test(nonce)) document.body.textContent = "Open this preview from Plannotator in BB.";
-else createRoot(document.getElementById("root")!).render(<IsolatedReview threadId={threadId} path={path ?? undefined} nonce={nonce} parentOrigin={parentOrigin} />);
+else createRoot(document.getElementById("root")!).render(<IframePlatform threadId={threadId} nonce={nonce} parentOrigin={parentOrigin}><DocumentPanel threadId={threadId} initialPath={path ?? undefined} /></IframePlatform>);

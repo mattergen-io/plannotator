@@ -4,6 +4,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { FactoryControls } from "../factory/controls";
+import { ReviewPlatformContext, type ReviewPlatform } from "../review-platform";
+import { useRpc, useRealtime } from "@get-bb/plugin-sdk/app";
 import {
   factoryContract,
   factoryViewSchema,
@@ -21,6 +23,13 @@ const contract = {
   factoryAccept: factoryContract.factoryAccept,
   factoryDraft: factoryContract.factoryDraft,
 };
+function FactoryHost(props: React.ComponentProps<typeof FactoryControls>) {
+  const rpc = useRpc<typeof factoryContract>();
+  const listeners = React.useRef(new Set<() => void>());
+  useRealtime(CHANNEL, () => listeners.current.forEach(listener => listener()));
+  const platform = React.useMemo(() => ({ factoryRpc: rpc, reviewRpc: rpc, insertDraft: async () => {}, openThread: () => {}, openFile: () => {}, ModelPicker: () => <span>Native model picker</span>, subscribe: (listener: () => void) => { listeners.current.add(listener); return () => { listeners.current.delete(listener); }; } }) as unknown as ReviewPlatform, [rpc]);
+  return <ReviewPlatformContext.Provider value={platform}><FactoryControls {...props} /></ReviewPlatformContext.Provider>;
+}
 const path = ".kiro/specs/demo/requirements.md",
   sha = "a".repeat(64);
 function initial(importing = false): FactoryView {
@@ -93,7 +102,7 @@ function mount(importing = false, beadsError = false) {
     return { ok: true as const };
   });
   const slot = renderSlot(
-    { component: FactoryControls },
+    { component: FactoryHost },
     {
       threadId: "planner",
       folder: ".kiro/specs/demo",
