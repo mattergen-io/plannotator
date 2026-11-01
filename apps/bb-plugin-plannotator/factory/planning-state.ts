@@ -1,7 +1,7 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import type { SpecSets } from "../spec-sets";
 import { folderPath, insideFolder } from "../contracts";
-import { hash, workspace, readDocument } from "../workspace";
+import { hash, workspace } from "../workspace";
 import {
   specStateSchema,
   taskStateSchema,
@@ -27,7 +27,10 @@ export function planningState(
       throw new Error(
         "Spec discovery is incomplete; refresh a complete inventory before changing phase state.",
       );
-    const set = await sets.read(threadId, folder);
+    const loaded = new Map<string, Snapshot>();
+    const set = await sets.read(threadId, folder, (doc) => loaded.set(doc.path, { path: doc.path, sha256: doc.sha256, content: doc.content }));
+    if (set.hostId !== source.hostId || set.checkoutRoot !== source.checkoutRoot || set.environmentId !== source.environmentId)
+      throw new Error("This thread moved while loading the spec set. Refresh before reviewing.");
     const owned = set.files.filter(
       (file) =>
         !catalogue.specs.some(
@@ -41,15 +44,7 @@ export function planningState(
       throw new Error(
         "Resolve unreadable spec documents before changing its phase.",
       );
-    const documents: Snapshot[] = [];
-    for (const file of owned) {
-      const doc = await readDocument(bb, threadId, file.path, source);
-      documents.push({
-        path: doc.path,
-        sha256: doc.sha256,
-        content: doc.content,
-      });
-    }
+    const documents = owned.map((file) => loaded.get(file.path)!);
     return {
       threadId,
       source,
@@ -222,13 +217,17 @@ export function planningState(
       runs: [],
     };
     try {
-      const first = await load(threadId, folder);
-      const data = options.synchronize
-        ? await beads.locked(
-            `${first.source.hostId}:${first.context.project_id}`,
-            async () => synchronize(await load(threadId, folder)),
-          )
-        : first;
+      const source = options.synchronize ? await workspace(bb, threadId) : null;
+      const context = source ? await beads.ensureContext(source) : null;
+      const data = source && context
+        ? await beads.locked(`${source.hostId}:${context.project_id}`, async () => {
+            const current = await load(threadId, folder);
+            if (current.source.hostId !== source.hostId || current.source.checkoutRoot !== source.checkoutRoot ||
+                current.source.environmentId !== source.environmentId || current.context.project_id !== context.project_id)
+              throw new Error("This thread moved while loading the spec set. Refresh before reviewing.");
+            return synchronize(current);
+          })
+        : await load(threadId, folder);
       const state = data.state;
       const suggestedPhase = data.documents.some(
         (doc) => phaseFromName(doc.path.split("/").at(-1)!) === "tasks",

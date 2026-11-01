@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import React, { useMemo, useRef } from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { BlockRenderer } from '@plannotator/ui/components/BlockRenderer';
-import { useDocumentChanges, computeDocumentChanges } from '@plannotator/ui/hooks/useDocumentChanges';
+import { useDocumentChanges, computeDocumentChanges, addedTextRanges, type HighlightInput, type TextRange, type HighlightProjector } from '@plannotator/ui/hooks/useDocumentChanges';
 import { parseMarkdownToBlocks } from '@plannotator/ui/utils/parser';
 
 class PaintedHighlight {
@@ -15,11 +15,11 @@ function installHighlights() {
   vi.stubGlobal('Highlight', class extends PaintedHighlight { constructor(...ranges: Range[]) { super(ranges); } });
   return highlights;
 }
-function Document({ baseline, content }: { baseline?: string; content: string }) {
+function Document({ baseline, content, project }: { baseline?: string; content: string; project?: HighlightProjector }) {
   const ref = useRef<HTMLDivElement>(null);
   const blocks = useMemo(() => parseMarkdownToBlocks(content), [content]);
   const changes = useMemo(() => baseline === undefined ? undefined : computeDocumentChanges(baseline, content).blocks, [baseline, content]);
-  useDocumentChanges(ref, blocks, changes);
+  useDocumentChanges(ref, blocks, changes, project);
   return <div ref={ref}>{blocks.map(block => <BlockRenderer key={block.id} block={block} />)}</div>;
 }
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -75,4 +75,21 @@ it('retains block highlights when native text highlights are unavailable', () =>
   vi.stubGlobal('CSS', {}); vi.stubGlobal('Highlight', undefined);
   const ui = render(<Document baseline="Use slow mode." content="Use fast mode." />);
   expect(ui.getByText('Use fast mode.').getAttribute('data-document-change')).toBe('modified');
+});
+
+it('ignores obsolete async projections after the document DOM changes', async () => {
+  const highlights = installHighlights();
+  const pending: { inputs: HighlightInput[]; resolve: (value: TextRange[][]) => void }[] = [];
+  const project: HighlightProjector = inputs => new Promise(resolve => pending.push({ inputs, resolve }));
+  const ui = render(<Document baseline="Use slow mode." content="Use fast mode." project={project} />);
+  expect(pending).toHaveLength(1);
+  const oldText = ui.getByText('Use fast mode.').firstChild!;
+  const mark = document.createElement('mark');
+  const range = document.createRange(); range.selectNodeContents(oldText); range.surroundContents(mark);
+  await waitFor(() => expect(pending).toHaveLength(2));
+  await act(async () => pending[0]!.resolve(pending[0]!.inputs.map(x => addedTextRanges(x.tokens, x.rendered))));
+  expect(highlights.size).toBe(0);
+  await act(async () => pending[1]!.resolve(pending[1]!.inputs.map(x => addedTextRanges(x.tokens, x.rendered))));
+  expect([...highlights.values()][0].ranges.map(r => r.toString()).join('')).toBe('fast');
+  expect(mark.isConnected).toBe(true);
 });

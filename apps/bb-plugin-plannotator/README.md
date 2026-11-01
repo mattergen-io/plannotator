@@ -41,7 +41,7 @@ bun run --cwd apps/bb-plugin-plannotator build
 bb plugin install ./apps/bb-plugin-plannotator --yes
 ```
 
-The build generates the browser worker used to parse documents and calculate review changes. After changing the worker or its parser and diff dependencies, run `bun run --cwd apps/bb-plugin-plannotator build:worker` before a direct `bb plugin build` or development reload; the full build above generates it automatically.
+The build generates the browser worker used to parse documents, calculate review changes, and project inline highlights. After changing the worker or its parser and diff dependencies, run `bun run --cwd apps/bb-plugin-plannotator build:worker` before a direct `bb plugin build` or development reload; the full build above generates it automatically.
 
 Progress and verification: [BB integration guide](../../docs/agent-guides/bb-plugin.md).
 

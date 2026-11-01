@@ -44,6 +44,10 @@ configurePlannotatorUI({
 
 Anything you don't pass keeps Plannotator's default. A few component-specific overrides (e.g. an "open in editor" diff action) are passed as props where you render that component.
 
+### Asynchronous document-change highlights
+
+`Viewer` accepts an optional `projectDocumentChanges` callback to calculate added-text offsets asynchronously. The callback receives batches of diff tokens and rendered text and returns offset ranges for each input; `addedTextRanges` provides the default projection. DOM traversal and native range painting stay in the viewer. If the DOM changes before a response arrives, the viewer ignores the outdated response. Without this prop, projection remains synchronous as before.
+
 ### Resize-handle seams (`ResizeHandle` / `useResizablePanel`)
 
 The sidebar/panel resize handle exposes seams for hosts that want different edge interactions (e.g. no hover reveal, click-to-collapse). All default to today's behavior — pass nothing and it's unchanged.

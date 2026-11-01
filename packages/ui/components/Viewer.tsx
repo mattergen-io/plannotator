@@ -13,7 +13,7 @@ import { buildHeadingSlugMap } from '../utils/slugify';
 import { copyTextToClipboard } from '../utils/clipboard';
 import { getRichCopyEnabled } from '../utils/richCopyPolicy';
 import { BlockRenderer } from './BlockRenderer';
-import { useDocumentChanges } from '../hooks/useDocumentChanges';
+import { useDocumentChanges, type HighlightProjector } from '../hooks/useDocumentChanges';
 import type { PlanDiffBlock } from '../utils/planDiffEngine';
 import { BELOW_TITLE_SLOT_MARKER } from '../utils/belowTitleSlot';
 import { indexQuestionBlocks, type IndexedQuestion, type ParsedQuestion, type QuestionAnswer } from '@plannotator/core/question-block';
@@ -230,6 +230,8 @@ export interface ViewerProps {
   linkedDocInfo?: LinkedDocBadgeInfo | null;
   /** Paint baseline changes in the normal document without changing annotation anchors. */
   documentChanges?: readonly PlanDiffBlock[];
+  /** Optional asynchronous projection of changed text onto rendered text. */
+  projectDocumentChanges?: HighlightProjector;
 
   // Plan diff props
   planDiffStats?: { additions: number; deletions: number; modifications: number } | null;
@@ -806,6 +808,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
   gridEnabled = false,
   fillHeight = false,
   documentChanges,
+  projectDocumentChanges,
   planDiffStats,
   isPlanDiffActive,
   onPlanDiffToggle,
@@ -924,7 +927,7 @@ export const Viewer = forwardRef<ViewerHandle, ViewerProps>(({
     }
   };
   const containerRef = useRef<HTMLDivElement>(null);
-  useDocumentChanges(containerRef, blocks, documentChanges);
+  useDocumentChanges(containerRef, blocks, documentChanges, projectDocumentChanges);
   // The element that actually scrolls; shared by the Vim scroll math, the
   // sticky-header observer, and the reticle geometry.
   const scrollViewport = useScrollViewport();

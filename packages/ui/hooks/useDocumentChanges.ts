@@ -9,7 +9,9 @@ export const computeDocumentChanges = (baseline: string, content: string) => com
   content.endsWith('\n') ? content : content + '\n',
 );
 
-type TextRange = { start: number; end: number };
+export type TextRange = { start: number; end: number };
+export type HighlightInput = { tokens: readonly InlineDiffToken[]; rendered: string };
+export type HighlightProjector = (inputs: HighlightInput[]) => Promise<TextRange[][]>;
 
 /** Project added source characters onto rendered text, skipping Markdown syntax. */
 export function addedTextRanges(tokens: readonly InlineDiffToken[], rendered: string): TextRange[] {
@@ -41,7 +43,7 @@ export function addedTextRanges(tokens: readonly InlineDiffToken[], rendered: st
 
 /** Native range paint leaves the text and element tree untouched for annotation anchors. */
 export function useDocumentChanges(
-  containerRef: RefObject<HTMLElement | null>, blocks: readonly Block[], changes?: readonly PlanDiffBlock[],
+  containerRef: RefObject<HTMLElement | null>, blocks: readonly Block[], changes?: readonly PlanDiffBlock[], project?: HighlightProjector,
 ) {
   const name = `pn-document-added-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
   useEffect(() => {
@@ -76,9 +78,12 @@ export function useDocumentChanges(
       decorated.forEach(element => element.removeAttribute('data-document-change'));
       decorated.clear(); registry?.delete(name);
     }
+    let sequence = 0, disposed = false;
     function paint() {
+      const current = ++sequence;
       clear();
-      const ranges: Range[] = [];
+      const inputs: HighlightInput[] = [];
+      const nodeGroups: { node: Text; start: number; end: number }[][] = [];
       container!.querySelectorAll<HTMLElement>('[data-block-id]').forEach(element => {
         const change = metadata.get(element.dataset.blockId!);
         if (!change) return;
@@ -94,21 +99,33 @@ export function useDocumentChanges(
           nodes.push({ node: node as Text, start: text.length, end: text.length + value.length });
           text += value;
         }
-        for (const offsets of addedTextRanges(change.tokens, text)) {
-          const start = nodes.find(entry => entry.end > offsets.start);
-          const end = nodes.find(entry => entry.end >= offsets.end && entry.start < offsets.end);
-          if (!start || !end) continue;
-          const range = document.createRange();
-          range.setStart(start.node, offsets.start - start.start); range.setEnd(end.node, offsets.end - end.start);
-          ranges.push(range);
-        }
+        inputs.push({ tokens: change.tokens, rendered: text });
+        nodeGroups.push(nodes);
       });
-      if (registry && api.Highlight) registry.set(name, new api.Highlight(...ranges));
+      function apply(projected: TextRange[][]) {
+        if (disposed || current !== sequence || !registry || !api.Highlight) return;
+        const ranges: Range[] = [];
+        projected.forEach((offsets, index) => {
+          const nodes = nodeGroups[index];
+          if (!nodes) return;
+          for (const offset of offsets) {
+            const start = nodes.find(entry => entry.end > offset.start);
+            const end = nodes.find(entry => entry.end >= offset.end && entry.start < offset.end);
+            if (!start || !end) continue;
+            const range = document.createRange();
+            range.setStart(start.node, offset.start - start.start); range.setEnd(end.node, offset.end - end.start);
+            ranges.push(range);
+          }
+        });
+        registry.set(name, new api.Highlight(...ranges));
+      }
+      if (project && inputs.length) void project(inputs).then(apply).catch(() => apply([]));
+      else apply(inputs.map(input => addedTextRanges(input.tokens, input.rendered)));
     }
     paint();
     // Annotation marks and lazy syntax/diagram renderers can replace text nodes.
     // Repaint after those mutations; attribute paint itself cannot retrigger it.
-    let queued = false, disposed = false;
+    let queued = false;
     const observer = new MutationObserver(() => {
       if (queued) return;
       queued = true;
@@ -116,5 +133,5 @@ export function useDocumentChanges(
     });
     observer.observe(container, { childList: true, subtree: true, characterData: true });
     return () => { disposed = true; observer.disconnect(); clear(); style.remove(); };
-  }, [containerRef, blocks, changes, name]);
+  }, [containerRef, blocks, changes, name, project]);
 }

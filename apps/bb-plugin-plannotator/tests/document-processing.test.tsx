@@ -3,6 +3,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { processDocument } from "../document-processing";
 import { useDocumentProcessing } from "../use-document-processing";
+import { useHighlightProjection } from "../use-highlight-projection";
 
 class FakeWorker {
   static instances: FakeWorker[] = [];
@@ -48,4 +49,22 @@ it("surfaces processing errors without retrying the calculation on the UI thread
   const { result } = renderHook(() => useDocumentProcessing("text", null));
   act(() => FakeWorker.instances[0]!.onmessage?.({ data: { ok: false, error: "Cannot parse" } } as MessageEvent));
   expect(result.current).toMatchObject({ value: null, error: "Cannot parse", fallback: false });
+});
+
+it("projects highlights in a worker and cancels an obsolete projection", async () => {
+  vi.stubGlobal("Worker", FakeWorker);
+  vi.stubGlobal("URL", { createObjectURL: vi.fn(() => "blob:test"), revokeObjectURL: vi.fn() });
+  const { result, unmount } = renderHook(() => useHighlightProjection());
+  const inputs = [{ tokens: [{ type: "added" as const, value: "new" }], rendered: "new" }];
+  const first = result.current(inputs);
+  const old = FakeWorker.instances[0]!;
+  expect(old.postMessage).toHaveBeenCalledWith({ highlights: inputs });
+  const second = result.current(inputs);
+  expect(old.terminate).toHaveBeenCalled();
+  expect(await first).toEqual([]);
+  const current = FakeWorker.instances[1]!;
+  current.onmessage?.({ data: { ok: true, result: [[{ start: 0, end: 3 }]] } } as MessageEvent);
+  expect(await second).toEqual([[{ start: 0, end: 3 }]]);
+  expect(current.terminate).toHaveBeenCalled();
+  unmount();
 });

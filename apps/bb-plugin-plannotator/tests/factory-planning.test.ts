@@ -226,3 +226,15 @@ it("does not initialize over an unusable primary workspace from a worktree", asy
   expect(f.faults.initCount).toBe(0);
   expect(await readFile(marker, "utf8")).toBe("preserve me");
 }, 30000);
+
+it("reads each document once for a synchronized status view", async () => {
+  const f = await factoryFixture();
+  await writeFile(join(f.root, f.folder, "design.md"), "# Design\nA design.\n");
+  f.reads.length = 0;
+  const view = await f.view();
+  expect(view.configured).toBe(true);
+  expect(f.reads.sort()).toEqual([
+    join(f.root, f.folder, "design.md"),
+    join(f.root, f.folder, "requirements.md"),
+  ].sort());
+}, 30000);

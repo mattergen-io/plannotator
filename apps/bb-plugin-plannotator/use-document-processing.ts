@@ -24,7 +24,7 @@ export function useDocumentProcessing(content: string | undefined, baseline: str
       worker.onmessage = (event: MessageEvent<DocumentWorkerResult>) => {
         if (cancelled) return;
         worker?.terminate();
-        if (event.data.ok) setResult({ content, baseline, value: event.data.result, fallback: false });
+        if (event.data.ok) setResult({ content, baseline, value: event.data.result as ProcessedDocument, fallback: false });
         else setResult({ content, baseline, value: null, fallback: false, error: event.data.error });
       };
       worker.onerror = () => { worker?.terminate(); fallback(); };

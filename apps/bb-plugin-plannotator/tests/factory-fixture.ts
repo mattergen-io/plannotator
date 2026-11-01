@@ -64,6 +64,7 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
     contextError: null as string | null,
     initCount: 0,
   };
+  const reads: string[] = [];
   const sent: string[] = [],
     spawned: {
       id: string;
@@ -206,6 +207,7 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
       },
       files: {
         read: async ({ path }) => {
+          reads.push(path);
           const content = await readFile(path, "utf8");
           return {
             content,
@@ -281,6 +283,7 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
   return {
     ...fake,
     faults,
+    reads,
     ...workflow,
     root,
     git,

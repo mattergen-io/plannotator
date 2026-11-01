@@ -8,6 +8,7 @@ import { AnnotationPanel } from "@plannotator/ui/components/AnnotationPanel";
 import { ScrollViewportProvider } from "@plannotator/ui/hooks/useScrollViewport";
 import { PortalProvider } from "@plannotator/ui/components/PortalProvider";
 import { useDocumentProcessing } from "./use-document-processing";
+import { useHighlightProjection } from "./use-highlight-projection";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
 import { targetOf, feedbackSelection } from "./contracts";
@@ -27,6 +28,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   const [factoryView,setFactoryView]=useState<FactoryView|null>(null);
   const doc = review.document;
   const processed = useDocumentProcessing(doc?.content, doc?.baseline);
+  const projectHighlights = useHighlightProjection();
   const blocks = processed?.value?.blocks ?? [];
   const diff = processed?.value?.diff ?? null;
   const removals = processed?.value?.removals ?? [];
@@ -117,7 +119,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
             onAddAnnotation={annotation => { review.edit(current => [...current, annotation]); setNotesOpen(true); }} onSelectAnnotation={setSelected} selectedAnnotationId={selected}
             onDeleteAnnotation={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}
             onEditAnnotation={(id, updates) => review.edit(current => current.map(annotation => annotation.id === id ? { ...annotation, ...updates } : annotation))}
-            documentChanges={diff?.blocks} maxWidth={null} allowImages={false} quickLabels={false} disableCodePathValidation gridEnabled={false} sourceInfo={doc.path} readOnly={historical}
+            documentChanges={diff?.blocks} projectDocumentChanges={projectHighlights} maxWidth={null} allowImages={false} quickLabels={false} disableCodePathValidation gridEnabled={false} sourceInfo={doc.path} readOnly={historical}
             annotationHeader={{ onInputMethodChange: setInputMethod, onModeChange: setMode, hideQuickLabel: true }}
             selectionActions={selectionActions} copyLabel="Copy document" commentDraftKey={`${doc.id}:${doc.sha256}`}
             resolveLocalLink={() => ({ kind: "unavailable", title: "Open linked documents through the document picker." })} />}

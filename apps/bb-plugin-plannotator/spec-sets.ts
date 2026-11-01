@@ -27,7 +27,7 @@ export function specSets(bb: BbPluginApi, store: ReviewStore) {
     return { folder, path, specs, truncated: result.truncated };
   }
 
-  async function read(threadId: string, input: string): Promise<SpecSet> {
+  async function read(threadId: string, input: string, onDocument?: (document: Awaited<ReturnType<typeof readDocument>>) => void): Promise<SpecSet> {
     const folder = folderPath.parse(input), source = await workspace(bb, threadId);
     const listing = await bb.sdk.files.listPaths({ hostId: source.hostId, path: source.paths.join(source.checkoutRoot, folder),
       includeFiles: true, includeDirectories: true, includeHidden: true, excludeNames: [".git", "node_modules"], limit: 10000 });
@@ -45,7 +45,7 @@ export function specSets(bb: BbPluginApi, store: ReviewStore) {
     for (let offset = 0; offset < paths.length; offset += 8) files.push(...await Promise.all(paths.slice(offset, offset + 8).map(async path => {
       try {
         const document = await readDocument(bb, threadId, path, source);
-        store.capture(document); return store.summary(document);
+        store.capture(document); onDocument?.(document); return store.summary(document);
       } catch (cause) {
         return { path, id: null, sha256: null, revision: null, status: "unavailable" as const, commentCount: 0,
           error: cause instanceof Error ? cause.message : String(cause) };
