@@ -1,7 +1,15 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import { hostContract } from "../host-contract";
+import type { workspace } from "../workspace";
 import { beadSchema, type Bead } from "./model";
 import { z } from "zod";
+const missingBeadsDirectory = ({
+  stdout,
+  stderr,
+}: {
+  stdout: string;
+  stderr: string;
+}) => /no \.beads directory found/i.test(`${stdout}\n${stderr}`);
 export function beadsClient(bb: BbPluginApi) {
   const host = bb.hosts.experimental_client({ contract: hostContract });
   const locks = new Map<string, Promise<unknown>>();
@@ -38,13 +46,8 @@ export function beadsClient(bb: BbPluginApi) {
   ) => {
     const result = await command(hostId, root, program, args);
     if (result.code !== 0) {
-      if (
-        program === "bd" &&
-        /no \.beads directory found/i.test(`${result.stdout}\n${result.stderr}`)
-      )
-        throw new Error(
-          "This project doesn't have a Beads workspace yet. Select Initialize project Beads to set one up.",
-        );
+      if (program === "bd" && missingBeadsDirectory(result))
+        throw new Error("No Beads workspace found in this project.");
       throw new Error(
         `${program}: ${result.stderr || result.stdout}`.slice(0, 8192),
       );
@@ -53,6 +56,62 @@ export function beadsClient(bb: BbPluginApi) {
   };
   async function json(hostId: string, root: string, args: string[]) {
     return JSON.parse(await exec(hostId, root, "bd", [...args, "--json"]));
+  }
+  async function ensureContext(source: Awaited<ReturnType<typeof workspace>>) {
+    const { hostId, checkoutRoot: root, paths } = source;
+    const readContext = (result: {
+      code: number;
+      stdout: string;
+      stderr: string;
+    }) => {
+      if (result.code !== 0)
+        throw new Error(`bd: ${result.stderr || result.stdout}`.slice(0, 8192));
+      const context = JSON.parse(result.stdout);
+      if (!context.project_id)
+        throw new Error(
+          "Beads did not return a project identity. Check the workspace configuration.",
+        );
+      return context;
+    };
+    let result = await command(hostId, root, "bd", ["context", "--json"]);
+    if (result.code === 0 || !missingBeadsDirectory(result))
+      return readContext(result);
+    const common = await command(hostId, root, "git", [
+      "rev-parse",
+      "--path-format=absolute",
+      "--git-common-dir",
+    ]);
+    const commonDir = common.code === 0 ? common.stdout.trim() : "";
+    const primary =
+      paths.basename(commonDir) === ".git" ? paths.dirname(commonDir) : root;
+    return locked(`setup:${hostId}:${primary}`, async () => {
+      result = await command(hostId, root, "bd", ["context", "--json"]);
+      if (result.code === 0 || !missingBeadsDirectory(result))
+        return readContext(result);
+      const directories = [
+        ...new Set([paths.join(root, ".beads"), paths.join(primary, ".beads")]),
+      ];
+      const { existence } = await bb.sdk.hosts.pathsExist({
+        hostId,
+        paths: directories,
+      });
+      if (directories.some((directory) => existence[directory] !== false))
+        throw new Error(
+          "A .beads directory exists, but Beads could not open it. Check the workspace configuration before trying again.",
+        );
+      await exec(hostId, root, "bd", [
+        "init",
+        "--init-if-missing",
+        "--prefix",
+        "bf",
+        "--skip-agents",
+        "--skip-hooks",
+        "--non-interactive",
+      ]);
+      return readContext(
+        await command(hostId, root, "bd", ["context", "--json"]),
+      );
+    });
   }
   async function list(hostId: string, root: string) {
     return z
@@ -129,6 +188,16 @@ export function beadsClient(bb: BbPluginApi) {
     }
     return bead;
   }
-  return { command, exec, json, list, get, write, create, locked };
+  return {
+    command,
+    exec,
+    json,
+    ensureContext,
+    list,
+    get,
+    write,
+    create,
+    locked,
+  };
 }
 export type BeadsClient = ReturnType<typeof beadsClient>;

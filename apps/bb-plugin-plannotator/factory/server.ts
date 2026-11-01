@@ -34,21 +34,7 @@ export function factory(bb: BbPluginApi, sets: SpecSets, store: ReviewStore) {
     },
     factorySetup: async ({ threadId }) => {
       const source = await workspace(bb, threadId);
-      const context = await beads.command(
-        source.hostId,
-        source.checkoutRoot,
-        "bd",
-        ["context", "--json"],
-      );
-      if (context.code !== 0 || !JSON.parse(context.stdout).project_id)
-        await beads.exec(source.hostId, source.checkoutRoot, "bd", [
-          "init",
-          "--prefix",
-          "bf",
-          "--skip-agents",
-          "--skip-hooks",
-          "--non-interactive",
-        ]);
+      await beads.ensureContext(source);
       return { ok: true as const };
     },
     factoryInitialize: ({
@@ -130,10 +116,7 @@ export function factory(bb: BbPluginApi, sets: SpecSets, store: ReviewStore) {
       const folder = root === "." ? slug : `${root}/${slug}`;
       if (catalogue.specs.some((s) => s.folder === folder))
         throw new Error("A spec with that name already exists.");
-      const context = await beads.json(source.hostId, source.checkoutRoot, [
-        "context",
-      ]);
-      if (!context.project_id) throw new Error("Initialize Beads first.");
+      const context = await beads.ensureContext(source);
       const id = `bf-${hash(JSON.stringify([source.hostId, context.project_id, folder])).slice(0, 16)}`;
       const state: SpecState = {
         kind: "spec",

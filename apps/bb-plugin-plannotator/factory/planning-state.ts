@@ -61,13 +61,7 @@ export function planningState(
   }
   async function load(threadId: string, folder: string) {
     const data = await inventory(threadId, folder);
-    const context = await beads.json(
-      data.source.hostId,
-      data.source.checkoutRoot,
-      ["context"],
-    );
-    if (!context.project_id)
-      throw new Error("Initialize a Beads workspace for this repository.");
+    const context = await beads.ensureContext(data.source);
     const all = await beads.list(data.source.hostId, data.source.checkoutRoot);
     if (all.length >= 1000)
       throw new Error(

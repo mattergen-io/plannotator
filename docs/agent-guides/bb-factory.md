@@ -39,10 +39,11 @@ nearest qualifying ancestors; README-only containers are omitted from this selec
 The physical document tree preserves all folders and files under the chosen spec.
 Each child owns its documents even when viewed through its parent's file tree.
 
-Initialize project Beads if it is absent. Setup uses the existing `bd` installation
-and `bd init --skip-agents --skip-hooks --non-interactive`; it does not install hooks
-or overwrite an existing tracker. An imported spec suggests a phase and displays
-editable document memberships. Starting in Design/Tasks requires explicit acceptance
+Beads is initialized automatically when the spec workflow first needs it. Setup uses
+the existing `bd` installation with `--init-if-missing`, `--skip-agents`, `--skip-hooks`,
+and `--non-interactive`. Existing workspaces are reused; unusable workspaces and other
+Beads errors are reported without reinitialization. An imported spec suggests a phase
+and displays editable document memberships. Starting in Design/Tasks requires explicit acceptance
 of the current earlier documents. The backend rechecks the exact confirmed inventory.
 
 New spec takes an idea, creates a Beads spec identity, and asks the current thread

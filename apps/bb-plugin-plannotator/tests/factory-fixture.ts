@@ -6,6 +6,7 @@ import {
   readFile,
   rm,
   mkdir,
+  lstat,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -60,6 +61,8 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
   const faults = {
     taskCreatesBeforeFailure: null as number | null,
     taskCloseFailure: false,
+    contextError: null as string | null,
+    initCount: 0,
   };
   const sent: string[] = [],
     spawned: {
@@ -76,6 +79,14 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
     pluginId: "plannotator",
     experimental_callHostRpc: (call) => {
       const input = hostContract.command.input.parse(call.input);
+      if (input.program === "bd" && input.args[0] === "init")
+        faults.initCount++;
+      if (
+        input.program === "bd" &&
+        input.args[0] === "context" &&
+        faults.contextError
+      )
+        return { code: 1, stdout: "", stderr: faults.contextError };
       if (
         input.program === "bd" &&
         input.args[0] === "create" &&
@@ -165,6 +176,24 @@ export async function factoryFixture({ initializeBeads = true } = {}) {
               supportedReasoningEfforts: [{ reasoningEffort: "xhigh" }],
             },
           ],
+        }),
+      },
+      hosts: {
+        pathsExist: async ({ paths }) => ({
+          existence: Object.fromEntries(
+            await Promise.all(
+              paths.map(async (path) => {
+                try {
+                  await lstat(path);
+                  return [path, true];
+                } catch (error) {
+                  if ((error as NodeJS.ErrnoException).code === "ENOENT")
+                    return [path, false];
+                  throw error;
+                }
+              }),
+            ),
+          ),
         }),
       },
       environments: {

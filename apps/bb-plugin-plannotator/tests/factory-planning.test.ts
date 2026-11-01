@@ -1,8 +1,8 @@
-import { mkdir, rename, writeFile } from "node:fs/promises";
+import { mkdir, rename, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, it } from "vitest";
 import { factoryFixture } from "./factory-fixture";
-import { readDocument } from "../workspace";
+import { readDocument, workspace } from "../workspace";
 import { factoryViewSchema } from "../factory/contracts";
 it("imports explicit membership only for the exact confirmed document inventory", async () => {
   const f = await factoryFixture();
@@ -135,16 +135,94 @@ it("preserves both exact review marks when Design documents are reviewed concurr
   expect(view.state?.revision).toBe(2);
 }, 30000);
 
-it("offers a clear setup message when the project has no Beads workspace", async () => {
+it("automatically initializes a missing workspace once for concurrent requests", async () => {
   const f = await factoryFixture({ initializeBeads: false });
+  const [first, second] = await Promise.all([f.view(), f.view()]);
+  expect(first.configured).toBe(true);
+  expect(second.configured).toBe(true);
+  expect(f.faults.initCount).toBe(1);
+  const context = await f.beads.json("host-1", f.root, ["context"]);
+  expect(context.project_id).toBeTruthy();
+  expect((await f.view()).configured).toBe(true);
+  expect((await f.beads.json("host-1", f.root, ["context"])).project_id).toBe(
+    context.project_id,
+  );
+  expect(f.faults.initCount).toBe(1);
+}, 30000);
+it("creates Beads when starting a new spec with no workspace", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  const result = await f.harness.behavior.callRpc("factoryNewSpec", {
+    threadId: f.threadId,
+    name: "Fresh spec",
+    idea: "A small feature",
+  });
+  expect(result).toEqual({ folder: ".kiro/specs/fresh-spec" });
+  expect(f.faults.initCount).toBe(1);
+  expect(f.sent.join("\n")).toContain("A small feature");
+}, 30000);
+it("preserves an existing but unusable Beads directory", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  await mkdir(join(f.root, ".beads"));
+  const marker = join(f.root, ".beads", "existing-data.txt");
+  await writeFile(marker, "preserve me");
   const view = await f.view();
   expect(view.configured).toBe(false);
-  expect(view.error).toBe(
-    "This project doesn't have a Beads workspace yet. Select Initialize project Beads to set one up.",
-  );
-  await f.harness.behavior.callRpc("factorySetup", {
-    threadId: f.threadId,
-    folder: f.folder,
+  expect(view.error).toContain("A .beads directory exists");
+  expect(f.faults.initCount).toBe(0);
+  expect(await readFile(marker, "utf8")).toBe("preserve me");
+}, 30000);
+it("surfaces Beads connection errors without attempting initialization", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  f.faults.contextError = "database is unavailable";
+  const view = await f.view();
+  expect(view.configured).toBe(false);
+  expect(view.error).toContain("database is unavailable");
+  await expect(
+    f.harness.behavior.callRpc("factorySetup", {
+      threadId: f.threadId,
+      folder: f.folder,
+    }),
+  ).rejects.toThrow("database is unavailable");
+  expect(f.faults.initCount).toBe(0);
+}, 30000);
+it("reuses the existing project identity from a linked Git worktree", async () => {
+  const f = await factoryFixture();
+  const rootContext = await f.beads.json("host-1", f.root, ["context"]);
+  const worktree = `${f.root}.factory/worktree`;
+  f.git("worktree", "add", "-b", "linked", worktree);
+  const source = await workspace(f.bb, f.threadId);
+  const linked = await f.beads.ensureContext({
+    ...source,
+    checkoutRoot: worktree,
   });
-  expect((await f.view()).configured).toBe(true);
+  expect(linked.project_id).toBe(rootContext.project_id);
+  expect(linked.is_worktree).toBe(true);
+  expect(f.faults.initCount).toBe(0);
+}, 30000);
+it("initializes one shared workspace when a project and worktree start together", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  const worktree = `${f.root}.factory/worktree`;
+  f.git("worktree", "add", "-b", "linked", worktree);
+  const source = await workspace(f.bb, f.threadId);
+  const [primary, linked] = await Promise.all([
+    f.beads.ensureContext(source),
+    f.beads.ensureContext({ ...source, checkoutRoot: worktree }),
+  ]);
+  expect(primary.project_id).toBe(linked.project_id);
+  expect(linked.is_worktree).toBe(true);
+  expect(f.faults.initCount).toBe(1);
+}, 30000);
+it("does not initialize over an unusable primary workspace from a worktree", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  const worktree = `${f.root}.factory/worktree`;
+  f.git("worktree", "add", "-b", "linked", worktree);
+  await mkdir(join(f.root, ".beads"));
+  const marker = join(f.root, ".beads", "existing-data.txt");
+  await writeFile(marker, "preserve me");
+  const source = await workspace(f.bb, f.threadId);
+  await expect(
+    f.beads.ensureContext({ ...source, checkoutRoot: worktree }),
+  ).rejects.toThrow(".beads directory exists");
+  expect(f.faults.initCount).toBe(0);
+  expect(await readFile(marker, "utf8")).toBe("preserve me");
 }, 30000);

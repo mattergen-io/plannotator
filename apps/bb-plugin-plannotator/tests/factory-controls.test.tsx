@@ -17,7 +17,6 @@ vi.mock("@get-bb/plugin-sdk/app", async (original) => ({
 afterEach(cleanup);
 const contract = {
   factoryStatus: factoryContract.factoryStatus,
-  factorySetup: factoryContract.factorySetup,
   factoryInitialize: factoryContract.factoryInitialize,
   factoryAccept: factoryContract.factoryAccept,
   factoryDraft: factoryContract.factoryDraft,
@@ -64,19 +63,14 @@ function initial(importing = false): FactoryView {
     runs: [],
   });
 }
-function mount(importing = false, missingBeads = false) {
-  let view = missingBeads
+function mount(importing = false, beadsError = false) {
+  let view = beadsError
     ? {
         ...initial(true),
         configured: false,
-        error:
-          "This project doesn't have a Beads workspace yet. Select Initialize project Beads to set one up.",
+        error: "Beads database is unavailable.",
       }
     : initial(importing);
-  const setup = vi.fn(async () => {
-    view = initial(true);
-    return { ok: true as const };
-  });
   const flush = vi.fn(async () => {}),
     initialize = vi.fn(async () => {
       view = initial();
@@ -115,7 +109,6 @@ function mount(importing = false, missingBeads = false) {
       context: { threadId: "planner" },
       rpc: {
         factoryStatus: () => view,
-        factorySetup: setup,
         factoryInitialize: initialize,
         factoryAccept: accept,
         factoryDraft: draft,
@@ -124,11 +117,13 @@ function mount(importing = false, missingBeads = false) {
   );
   return {
     slot,
-    setup,
     flush,
     initialize,
     accept,
     draft,
+    restore: () => {
+      view = initial(true);
+    },
     review: () => {
       view = {
         ...view,
@@ -199,20 +194,16 @@ it("requires current reviews and a sizing assessment before accepting Requiremen
   slot.unmount();
 });
 
-it("shows a clear setup message and initializes Beads when requested", async () => {
-  const { slot, setup } = mount(false, true);
+it("shows Beads errors and lets the user retry", async () => {
+  const { slot, restore } = mount(false, true);
   await waitFor(() => expect(slot.getByText("Spec workflow")).toBeTruthy());
   fireEvent.click(slot.getByText("Spec workflow"));
   await waitFor(() =>
-    expect(slot.getByText(/doesn't have a Beads workspace yet/)).toBeTruthy(),
+    expect(slot.getByText("Beads database is unavailable.")).toBeTruthy(),
   );
-  fireEvent.click(slot.getByText("Initialize project Beads"));
-  await waitFor(() =>
-    expect(setup).toHaveBeenCalledWith({
-      threadId: "planner",
-      folder: ".kiro/specs/demo",
-    }),
-  );
+  expect(slot.queryByText("Initialize project Beads")).toBeNull();
+  restore();
+  fireEvent.click(slot.getByText("Retry"));
   await waitFor(() =>
     expect(slot.getByLabelText("Current phase")).toBeTruthy(),
   );

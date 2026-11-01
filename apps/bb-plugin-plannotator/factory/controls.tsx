@@ -244,24 +244,11 @@ export function FactoryControls({
               <button disabled={busy}>Start Requirements conversation</button>
             </form>
           )}
-          {!view?.configured && (
+          {view && !view.configured && view.error && (
             <div>
-              <p>
-                {view?.error ??
-                  "Set up Beads to track specs and factory work in this project."}
-              </p>
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void act(() =>
-                    rpc.call("factorySetup", {
-                      threadId,
-                      folder: folder ?? ".",
-                    }),
-                  )
-                }
-              >
-                Initialize project Beads
+              <p role="alert">{view.error}</p>
+              <button disabled={busy} onClick={() => void refresh()}>
+                Retry
               </button>
             </div>
           )}

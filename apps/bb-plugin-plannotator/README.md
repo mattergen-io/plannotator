@@ -17,8 +17,8 @@ Feedback is stored per thread, working-folder identity, document, and content ha
 
 Expand the workflow bar to initialize/import a spec, adjust phase membership, inspect
 acceptance history and context packs, and control a run. Beads must be installed on
-the thread's host; project setup reuses an existing tracker or initializes one without
-agent hooks. New spec begins with your idea and drafts Requirements in the native chat.
+the thread's host; the spec workflow automatically reuses an existing workspace or
+initializes one without agent hooks. New spec begins with your idea and drafts Requirements in the native chat.
 
 A run takes a workspace setup command (optional), verification command, and native BB
 model choices. Defaults are **Codex gpt-6.1-terra / medium** for workers and
