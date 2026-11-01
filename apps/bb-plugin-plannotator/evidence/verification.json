@@ -275,5 +275,53 @@
       "fileModified": false
     },
     "agentPromptChanged": false
+  },
+  "reviewLayoutSpacing": {
+    "capturedAt": "2026-11-01T03:06:07.160595+00:00",
+    "checks": [
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator test",
+        "result": "36 passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator typecheck",
+        "result": "passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator build",
+        "result": "passed"
+      },
+      {
+        "command": "bb plugin reload plannotator",
+        "result": "running"
+      }
+    ],
+    "wide": {
+      "mainWidth": 1635,
+      "removedSourceRows": 0,
+      "versionTopInset": 6,
+      "versionRightInset": 10,
+      "actionsTopInset": 6,
+      "toolbarTopGap": 4,
+      "titleGap": 8,
+      "titleTopInset": 119
+    },
+    "narrow": {
+      "mainWidth": 476,
+      "removedSourceRows": 0,
+      "versionTopInset": 6,
+      "versionRightInset": 10,
+      "actionsTopInset": 41,
+      "toolbarTopGap": 4,
+      "titleGap": 8,
+      "titleTopInset": 276,
+      "horizontalOverflow": false
+    },
+    "versionControl": {
+      "earlierVersionOpened": true,
+      "historicalApprovalDisabled": true,
+      "currentVersionRestored": true
+    },
+    "validation": "Live DOM measurements verified no source row, upper-right review history, 4px viewport-to-toolbar gap, 8px toolbar-to-title gap, and no horizontal overflow. Switched to an earlier read-only version and restored current."
   }
 }

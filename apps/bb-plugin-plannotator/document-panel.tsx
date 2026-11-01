@@ -84,9 +84,11 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
     </div>}
     {review.notice && <div role="status" className="bb-review-status">{review.notice}</div>}
     {doc ? <>
-      <div className="bb-review-source" title={`${doc.hostId}: ${doc.checkoutRoot}`}>
-        <span>{doc.path}</span><span>{review.dirty ? "Saving feedback…" : "Feedback saved"} · {doc.sha256.slice(0, 8)}{doc.approvedAt ? " · Approved" : ""}</span>
-      </div>
+      <header className="bb-review-header">
+        <div className="bb-review-header-main">
+          <label className="bb-review-version">Review version <select aria-label="Review version" disabled={review.busy} value={doc.sha256} onChange={event => void review.run(() => review.load(doc.path, event.target.value))}>
+            {doc.versions.map(version => <option key={version.sha256} value={version.sha256}>{version.sha256 === doc.currentSha256 ? "Current" : "Earlier"} · {version.sha256.slice(0,8)} · {version.commentCount} comments</option>)}
+          </select></label>
       <div className="bb-review-actions">
         <button onClick={addToChat} disabled={review.busy || !feedbackCount || historical}>Add to chat</button>
         <button onClick={() => send("feedback")} disabled={review.busy || !feedbackCount || historical}>Send feedback</button>
@@ -97,14 +99,13 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
         <button title="Approve only the displayed document" className="bb-review-approve" onClick={() => send("approve")} disabled={review.busy || historical}>Approve</button>
         <button aria-expanded={notesOpen} onClick={() => setNotesOpen(!notesOpen)}>Comments ({annotations.length})</button>
       </div>
-      <div className="bb-review-scope">Feedback includes comments across this set. Reviewed and Approve apply to this document.</div>
+          {review.dirty && <span role="status" className="bb-review-saving">Saving feedback…</span>}
+        </div>
+        <div className="bb-review-scope"><span>Feedback includes comments across this set. Reviewed and Approve apply to this document.</span>
+          {diff && <span className="bb-review-change-legend">{diff.stats.additions || diff.stats.deletions ? <>Changes since review: <span>added</span> · <span>edited</span></> : "No changes since review."}</span>}
+        </div>
+      </header>
       {uncertain && <div className="bb-review-error">Check the conversation before resending. <button onClick={() => send(uncertain, true)} disabled={review.busy}>Resend</button></div>}
-      <div className="bb-review-version">
-        <label>Review version <select aria-label="Review version" disabled={review.busy} value={doc.sha256} onChange={event => void review.run(() => review.load(doc.path, event.target.value))}>
-          {doc.versions.map(version => <option key={version.sha256} value={version.sha256}>{version.sha256 === doc.currentSha256 ? "Current" : "Earlier"} · {version.sha256.slice(0,8)} · {version.commentCount} comments</option>)}
-        </select></label>
-        {diff && <span className="bb-review-change-legend">{diff.stats.additions || diff.stats.deletions ? <>Changes since review: <span>added</span> · <span>edited</span></> : "No changes since review."}</span>}
-      </div>
       {historical && <div className="bb-review-status">Viewing an earlier document version and its saved feedback. <button onClick={() => void review.run(() => review.load(doc.path))}>View current</button></div>}
       {portal && <PortalProvider container={portal}><ScrollViewportProvider viewport={viewport}>
         <div ref={setViewport} className="bb-review-document" aria-label="Review document">

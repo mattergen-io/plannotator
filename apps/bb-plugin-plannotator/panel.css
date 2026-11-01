@@ -3,9 +3,7 @@
 .bb-plannotator-panel button:hover { background:var(--muted); }
 .bb-plannotator-panel button:disabled { opacity:.45; cursor:default; }
 .bb-plannotator-panel button:focus-visible, .bb-plannotator-panel input:focus-visible, .bb-plannotator-panel select:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
-.bb-plannotator-panel .bb-review-source, .bb-plannotator-panel .bb-review-version { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 10px; font-size:11px; color:var(--muted-foreground); }
-.bb-plannotator-panel .bb-review-source span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.bb-plannotator-panel .bb-review-actions { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; border-bottom:1px solid var(--border); }
+.bb-plannotator-panel .bb-review-actions { display:flex; flex:1 0 auto; flex-wrap:wrap; max-width:100%; gap:6px; }
 .bb-plannotator-panel .bb-review-approve { border-color:var(--primary); }
 .bb-plannotator-panel .bb-review-document { flex:1; min-height:140px; overflow:auto; padding:4px 14px 24px; position:relative; }
 .bb-plannotator-panel .bb-review-comments { flex:0 1 28%; min-height:70px; max-height:230px; overflow:auto; border-top:1px solid var(--border); }
@@ -40,7 +38,7 @@
 .bb-plannotator-panel .bb-review-file-error { font-size:11px; padding:2px 6px; overflow-wrap:anywhere; }
 .bb-plannotator-panel .bb-review-comment-count { font-size:10px; color:var(--muted-foreground); flex-shrink:0; }
 .bb-plannotator-panel .bb-review-tree-complete { margin-left:10px; font-size:10px; }
-.bb-plannotator-panel .bb-review-scope { font-size:11px; padding:4px 10px; color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-review-scope { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; font-size:11px; padding-top:4px; color:var(--muted-foreground); }
 .bb-plannotator-panel .bb-review-workspace { display:flex; flex:1; min-height:0; min-width:0; overflow:hidden; }
 .bb-plannotator-panel .bb-review-navigation { display:flex; flex-direction:column; flex:0 0 clamp(150px,30%,245px); min-height:0; min-width:0; border-right:1px solid var(--border); }
 .bb-plannotator-panel .bb-review-main { display:flex; flex:1; flex-direction:column; min-height:0; min-width:0; overflow:hidden; }
@@ -59,3 +57,12 @@
 .bb-plannotator-panel a.bb-review-tree-file { color:inherit; text-decoration:none; }
 .bb-plannotator-panel .bb-review-tree li summary .bb-review-pending-count { display:block; margin-left:14px; }
 .bb-plannotator-panel .bb-review-tree > header .bb-review-pending-count { margin-left:0; }
+.bb-plannotator-panel .bb-review-header { padding:6px 10px; border-bottom:1px solid var(--border); }
+.bb-plannotator-panel .bb-review-header-main { display:flex; flex-flow:row-reverse wrap; align-items:flex-start; gap:6px 12px; }
+.bb-plannotator-panel .bb-review-version { display:flex; flex-shrink:0; align-items:center; gap:6px; max-width:100%; margin-left:auto; font-size:11px; color:var(--muted-foreground); white-space:nowrap; }
+.bb-plannotator-panel .bb-review-version select { min-width:0; max-width:100%; }
+.bb-plannotator-panel .bb-review-saving { font-size:11px; color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-review-document [data-doc-text-root] { padding-top:0; }
+.bb-plannotator-panel .bb-review-document [data-viewer-document-header] { top:0; margin-bottom:8px; }
+.bb-plannotator-panel .bb-review-document [data-viewer-annotation-controls], .bb-plannotator-panel .bb-review-document [data-sticky-actions] { padding-block:4px; }
+.bb-plannotator-panel .bb-review-document [data-viewer-document-header] + [data-block-id] { margin-top:8px; }
