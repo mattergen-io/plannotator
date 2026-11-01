@@ -11,7 +11,7 @@ import { useDocumentProcessing } from "./use-document-processing";
 import { useHighlightProjection } from "./use-highlight-projection";
 import { useOffscreenTables } from "./use-offscreen-tables";
 
-export function IsolatedReview({ threadId, path, nonce }: { threadId: string; path: string; nonce: string }) {
+export function IsolatedReview({ threadId, path, nonce, parentOrigin }: { threadId: string; path?: string; nonce: string; parentOrigin: string }) {
   const review = useReview(threadId, path, isolatedRpc, "connected");
   const [selected, setSelected] = useState<string | null>(null), [notice, setNotice] = useState<string | null>(null);
   const [mode, setMode] = useState<EditorMode>("selection"), [input, setInput] = useState<InputMethod>("drag");
@@ -28,18 +28,18 @@ export function IsolatedReview({ threadId, path, nonce }: { threadId: string; pa
   useOffscreenTables(viewport, processed?.value);
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
-      if (event.source !== window || event.origin !== location.origin || event.data?.nonce !== nonce) return;
+      if (event.source !== window.parent || event.origin !== parentOrigin || event.data?.nonce !== nonce) return;
       if (event.data.type === "plannotator-refresh") review.refresh();
       if (event.data.type === "plannotator-draft-result" && pending.current.delete(event.data.id))
         setNotice(event.data.ok ? "Added to the BB composer." : String(event.data.error || "Could not reach the BB composer."));
     };
     window.addEventListener("message", onMessage); return () => window.removeEventListener("message", onMessage);
-  }, [nonce, review.refresh]);
+  }, [nonce, parentOrigin, review.refresh]);
   function addText(text: string) {
     const id = crypto.randomUUID(); pending.current.add(id);
-    window.postMessage({ type: "plannotator-draft", nonce, id, threadId, text }, location.origin);
+    window.parent.postMessage({ type: "plannotator-draft", nonce, id, threadId, text }, parentOrigin);
     setNotice("Adding to the BB composer…");
-    setTimeout(() => { if (pending.current.delete(id)) setNotice("BB composer bridge unavailable. Open this page in BB’s Browser tab."); }, 5000);
+    setTimeout(() => { if (pending.current.delete(id)) setNotice("BB composer bridge unavailable."); }, 5000);
   }
   function addFeedback() {
     void review.run(async () => {
@@ -59,7 +59,7 @@ export function IsolatedReview({ threadId, path, nonce }: { threadId: string; pa
         </button>)}
       </nav></section></aside>
       <main className="bb-review-main">
-        <div className="bb-review-status">Isolated preview · Phase and factory actions remain in the regular Plannotator panel.</div>
+        <div className="bb-review-status">Iframe review experiment · Phase and factory actions are temporarily unavailable.</div>
         {review.error && <div role="alert" className="bb-review-error">{review.error}</div>}
         {(notice || review.notice) && <div role="status" className="bb-review-status">{notice || review.notice}</div>}
         {doc ? <>
