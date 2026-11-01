@@ -474,9 +474,19 @@ async function loadWithRetry<T>(load: () => Promise<T>, delayMs: number): Promis
   }
 }
 
-async function renderMermaid(runtime: Mermaid, renderId: string, source: string): Promise<DiagramRenderResult> {
+/** The host renderer could not start or stopped responding; Retry may recover it. */
+export class MermaidRendererUnavailableError extends Error {}
+
+type MermaidRenderOverride = (renderId: string, source: string, theme: DiagramTheme) => Promise<string>;
+let mermaidRenderOverride: MermaidRenderOverride | null = null;
+/** A host can isolate Mermaid's DOM-heavy rendering while reusing SVG sanitization. */
+export function setMermaidRenderOverride(render: MermaidRenderOverride | null): void {
+  mermaidRenderOverride = render;
+}
+
+async function renderMermaid(render: (id: string, text: string) => Promise<{ svg: string }>, renderId: string, source: string): Promise<DiagramRenderResult> {
   try {
-    const { svg } = await runtime.render(renderId, source);
+    const { svg } = await render(renderId, source);
     const svgNode = sanitizeDiagramSvg(svg);
     if (svgNode === null) {
       return { ok: false, message: 'The diagram could not be rendered.', line: null, runtimeUnavailable: false };
@@ -488,7 +498,7 @@ async function renderMermaid(runtime: Mermaid, renderId: string, source: string)
       ok: false,
       message: errorMessage(error, 'Failed to render diagram'),
       line: errorLine(error),
-      runtimeUnavailable: false,
+      runtimeUnavailable: error instanceof MermaidRendererUnavailableError,
     };
   }
 }
@@ -496,6 +506,10 @@ async function renderMermaid(runtime: Mermaid, renderId: string, source: string)
 const mermaidRenderer: DiagramRenderer = {
   finder: MERMAID_FINDER,
   async render(renderId, source, theme) {
+    if (mermaidRenderOverride) {
+      const render = mermaidRenderOverride;
+      return renderMermaid(async (id, text) => ({ svg: await render(id, text, theme) }), renderId, source);
+    }
     let runtime: Mermaid;
     try {
       runtime = await loadWithRetry(loadMermaidRuntime, getMermaidRetryDelayMs());
@@ -526,7 +540,7 @@ const mermaidRenderer: DiagramRenderer = {
     // With no tokens on the page it is a no-op and the static
     // MERMAID_CONFIG (securityLevel strict) applies.
     applyMermaidTheme(runtime, mermaidThemeKey(theme.colorTheme, theme.mode, theme.shadowAmount));
-    return renderMermaid(runtime, renderId, source);
+    return renderMermaid((id, text) => runtime.render(id, text), renderId, source);
   },
 };
 

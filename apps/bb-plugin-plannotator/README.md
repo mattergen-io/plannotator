@@ -41,7 +41,7 @@ bun run --cwd apps/bb-plugin-plannotator build
 bb plugin install ./apps/bb-plugin-plannotator --yes
 ```
 
-The build generates the browser worker used to parse documents, calculate review changes, and project inline highlights. After changing the worker or its parser and diff dependencies, run `bun run --cwd apps/bb-plugin-plannotator build:worker` before a direct `bb plugin build` or development reload; the full build above generates it automatically.
+The build generates the browser worker used to parse documents, calculate review changes, and project inline highlights. Mermaid is rendered in a separate, sandboxed document so SVG measurements do not repeatedly restyle the BB page; the resulting SVG still passes through the shared sanitizer and viewer. After changing worker, Mermaid, or their dependencies, run `bun run --cwd apps/bb-plugin-plannotator build:assets` before a direct `bb plugin build` or development reload; the full build above generates both automatically.
 
 Progress and verification: [BB integration guide](../../docs/agent-guides/bb-plugin.md).
 

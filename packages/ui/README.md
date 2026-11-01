@@ -48,6 +48,10 @@ Anything you don't pass keeps Plannotator's default. A few component-specific ov
 
 `Viewer` accepts an optional `projectDocumentChanges` callback to calculate added-text offsets asynchronously. The callback receives batches of diff tokens and rendered text and returns offset ranges for each input; `addedTextRanges` provides the default projection. DOM traversal and native range painting stay in the viewer. If the DOM changes before a response arrives, the viewer ignores the outdated response. Without this prop, projection remains synchronous as before.
 
+### Mermaid renderer override
+
+A host may call `setMermaidRenderOverride` from `utils/diagram-render` with an async `(id, source, theme) => svg` renderer, or `null` to restore the default. The shared renderer sanitizes the returned SVG and retains the existing diagram viewer and annotation handling. A host implementing this seam is responsible for strict Mermaid settings and preserving the supplied theme.
+
 ### Resize-handle seams (`ResizeHandle` / `useResizablePanel`)
 
 The sidebar/panel resize handle exposes seams for hosts that want different edge interactions (e.g. no hover reveal, click-to-collapse). All default to today's behavior — pass nothing and it's unchanged.

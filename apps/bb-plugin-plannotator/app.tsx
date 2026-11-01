@@ -1,6 +1,8 @@
 import { definePluginApp, experimental_copyToClipboard, type ExperimentalThreadActionTabProps, type PluginFileOpenerProps } from "@get-bb/plugin-sdk/app";
 import { configurePlannotatorUI } from "@plannotator/ui/configure";
 import { setClipboardWriter } from "@plannotator/ui/utils/clipboard";
+import { setMermaidRenderOverride } from "@plannotator/ui/utils/diagram-render";
+import { renderMermaidInSandbox } from "./mermaid-sandbox";
 import { DocumentPanel } from "./document-panel";
 import { TAB } from "./contracts";
 import "./document-styles.css";
@@ -18,6 +20,7 @@ configurePlannotatorUI({
   docPreviewFetcher: async () => null,
 });
 setClipboardWriter(text => experimental_copyToClipboard({ text }));
+setMermaidRenderOverride(renderMermaidInSandbox);
 
 function ReviewTab({ threadId, params }: ExperimentalThreadActionTabProps) {
   const path = params && typeof params === "object" && !Array.isArray(params) && typeof params.path === "string" ? params.path : undefined;

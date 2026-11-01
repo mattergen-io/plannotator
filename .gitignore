@@ -122,3 +122,6 @@ test-results/
 
 # Native BB plugin generated document worker
 /apps/bb-plugin-plannotator/document-worker.generated.txt
+
+# Native BB plugin generated Mermaid sandbox
+/apps/bb-plugin-plannotator/mermaid-sandbox.generated.txt
