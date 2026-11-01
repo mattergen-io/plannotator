@@ -41,6 +41,8 @@ bun run --cwd apps/bb-plugin-plannotator build
 bb plugin install ./apps/bb-plugin-plannotator --yes
 ```
 
+The build generates the browser worker used to parse documents and calculate review changes. After changing the worker or its parser and diff dependencies, run `bun run --cwd apps/bb-plugin-plannotator build:worker` before a direct `bb plugin build` or development reload; the full build above generates it automatically.
+
 Progress and verification: [BB integration guide](../../docs/agent-guides/bb-plugin.md).
 
 A set supports up to 200 UTF-8 `.md` / `.markdown` documents, each up to 256 KiB, with 128 KiB of annotations per version and 128 KiB per combined feedback prompt. Files remain in their BB checkout. A folder change opens a separate review identity; this plugin does not carry spec folders. Sends queue behind active agent turns. A failed send is recorded as uncertain; check delivery before explicitly resending.

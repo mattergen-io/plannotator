@@ -119,3 +119,6 @@ test-results/
 
 # Native BB plugin generated styles
 /apps/bb-plugin-plannotator/document-styles.css
+
+# Native BB plugin generated document worker
+/apps/bb-plugin-plannotator/document-worker.generated.txt

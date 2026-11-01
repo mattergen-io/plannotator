@@ -1,14 +1,13 @@
 import type {FactoryView} from "./factory/contracts";
 import { FactoryControls } from "./factory/controls";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useComposer } from "@get-bb/plugin-sdk/app";
 import { Viewer, type ViewerHandle } from "@plannotator/ui/components/Viewer";
 import { RenderedMarkdown } from "@plannotator/ui/components/RenderedMarkdown";
 import { AnnotationPanel } from "@plannotator/ui/components/AnnotationPanel";
 import { ScrollViewportProvider } from "@plannotator/ui/hooks/useScrollViewport";
 import { PortalProvider } from "@plannotator/ui/components/PortalProvider";
-import { computeDocumentChanges } from "@plannotator/ui/hooks/useDocumentChanges";
-import { parseMarkdownToBlocks } from "@plannotator/ui/utils/parser";
+import { useDocumentProcessing } from "./use-document-processing";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
 import { targetOf, feedbackSelection } from "./contracts";
@@ -27,13 +26,10 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   const [factoryInitialized,setFactoryInitialized]=useState(false);
   const [factoryView,setFactoryView]=useState<FactoryView|null>(null);
   const doc = review.document;
-  const blocks = useMemo(() => parseMarkdownToBlocks(doc?.content ?? ""), [doc?.content]);
-  const diff = useMemo(() => doc?.baseline !== null && doc?.baseline !== undefined ? computeDocumentChanges(doc.baseline, doc.content) : null, [doc?.baseline, doc?.content]);
-  const removals = useMemo(() => (diff?.blocks ?? []).flatMap(block => {
-    const content = block.type === "removed" ? block.content : block.type === "modified"
-      ? block.inlineTokens ? block.inlineTokens.filter(token => token.type === "removed").map(token => token.value).join(" … ") : block.oldContent : null;
-    return content?.trim() ? [{ line: block.oldStart, content }] : [];
-  }), [diff]);
+  const processed = useDocumentProcessing(doc?.content, doc?.baseline);
+  const blocks = processed?.value?.blocks ?? [];
+  const diff = processed?.value?.diff ?? null;
+  const removals = processed?.value?.removals ?? [];
   const annotations = (doc?.annotations ?? []) as Annotation[];
   useEffect(() => {
     const element = document.createElement("div");
@@ -97,7 +93,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
       <div className="bb-review-actions">
         <button onClick={addToChat} disabled={review.busy || !feedbackCount || historical}>Add to chat</button>
         <button onClick={() => send("feedback")} disabled={review.busy || !feedbackCount || historical}>Send feedback</button>
-        <button title="Mark only the displayed document as reviewed" disabled={review.busy || historical} onClick={() => void review.run(async () => {
+        <button title="Mark only the displayed document as reviewed" disabled={review.busy || historical || !processed?.value} onClick={() => void review.run(async () => {
           await review.flush(); const current = review.current.current; if (!current) return;
           await review.rpc.call("reviewed", { ...targetOf(current),...(factoryInitialized&&review.specSet?{specFolder:review.specSet.folder}:{}) }); await review.load(current.path); review.setNotice("Reviewed baseline updated.");
         })}>Reviewed</button>
@@ -114,21 +110,24 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
       {portal && <PortalProvider container={portal}><ScrollViewportProvider viewport={viewport}>
         <div ref={setViewport} className="bb-review-document" aria-label="Review document">
           <div className="bb-review-reading-column">
-          <Viewer key={`${doc.id}:${doc.sha256}`} ref={viewer} blocks={blocks} markdown={doc.content} annotations={annotations} mode={mode} inputMethod={inputMethod} taterMode={false}
+          {!processed && <div role="status" className="bb-review-empty">Preparing document…</div>}
+          {processed?.error && <div role="alert" className="bb-review-error">Unable to prepare this document: {processed.error}</div>}
+          {processed?.fallback && processed.value && <div role="status" className="bb-review-status">Background document processing is unavailable; this document was processed in the panel.</div>}
+          {processed?.value && <Viewer key={`${doc.id}:${doc.sha256}`} ref={viewer} blocks={blocks} markdown={doc.content} annotations={annotations} mode={mode} inputMethod={inputMethod} taterMode={false}
             onAddAnnotation={annotation => { review.edit(current => [...current, annotation]); setNotesOpen(true); }} onSelectAnnotation={setSelected} selectedAnnotationId={selected}
             onDeleteAnnotation={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}
             onEditAnnotation={(id, updates) => review.edit(current => current.map(annotation => annotation.id === id ? { ...annotation, ...updates } : annotation))}
             documentChanges={diff?.blocks} maxWidth={null} allowImages={false} quickLabels={false} disableCodePathValidation gridEnabled={false} sourceInfo={doc.path} readOnly={historical}
             annotationHeader={{ onInputMethodChange: setInputMethod, onModeChange: setMode, hideQuickLabel: true }}
             selectionActions={selectionActions} copyLabel="Copy document" commentDraftKey={`${doc.id}:${doc.sha256}`}
-            resolveLocalLink={() => ({ kind: "unavailable", title: "Open linked documents through the document picker." })} />
+            resolveLocalLink={() => ({ kind: "unavailable", title: "Open linked documents through the document picker." })} />}
           {!!removals.length && <section className="bb-review-removed" aria-label="Removed text since review">
             <h3>Removed text since review</h3>
             {removals.map((removed, index) => <div key={index}><span>Previous line {removed.line}</span><del className="bb-review-removed-content"><RenderedMarkdown markdown={removed.content} resolveLocalLink={() => ({ kind: "unavailable", title: "Removed text from the previous review." })} resolveImage={() => ({ kind: "unavailable", title: "Image from the previous review." })} /></del></div>)}
           </section>}
           </div>
         </div>
-        {notesOpen && <div className="bb-review-comments"><AnnotationPanel presentation="embedded" isOpen annotations={annotations} blocks={blocks} selectedId={selected} onSelect={setSelected}
+        {processed?.value && notesOpen && <div className="bb-review-comments"><AnnotationPanel presentation="embedded" isOpen annotations={annotations} blocks={blocks} selectedId={selected} onSelect={setSelected}
           onDelete={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}
           onEdit={(id, updates) => review.edit(current => current.map(annotation => annotation.id === id ? { ...annotation, ...updates } : annotation))} readOnly={historical} sharingEnabled={false} />
           {!annotations.length && <p className="bb-review-empty-comments">Select text or choose Global comment to add feedback.</p>}

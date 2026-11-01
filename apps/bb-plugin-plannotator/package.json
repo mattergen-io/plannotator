@@ -20,10 +20,11 @@
     "host": "./host.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "build": "bun run build:styles && bb plugin build",
-    "build:styles": "bun run --cwd ../../packages/ui build:css && bun scripts/scope-styles.ts"
+    "typecheck": "bun run build:worker && tsc --noEmit",
+    "test": "bun run build:worker && vitest run",
+    "build": "bun run build:styles && bun run build:worker && bb plugin build",
+    "build:styles": "bun run --cwd ../../packages/ui build:css && bun scripts/scope-styles.ts",
+    "build:worker": "bun build document-worker.ts --target browser --format iife --minify --outfile document-worker.generated.txt"
   },
   "dependencies": {
     "@plannotator/ui": "workspace:*",
