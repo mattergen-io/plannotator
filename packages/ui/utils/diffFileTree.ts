@@ -17,16 +17,21 @@
  * review's own parser never produces it. */
 export type DiffFileTreeStatus = 'added' | 'modified' | 'deleted' | 'renamed' | 'binary';
 
-/** The minimum a file needs to sit in the tree. */
-export interface DiffFileTreeFile {
+/** Hosts may reuse the path tree without inventing diff statuses or counts. */
+export interface FileTreeInput {
   path: string;
+  additions?: number;
+  deletions?: number;
+}
+
+export interface DiffFileTreeFile extends FileTreeInput {
   oldPath?: string;
   status: DiffFileTreeStatus;
   additions: number;
   deletions: number;
 }
 
-export interface DiffFileTreeNode<F extends DiffFileTreeFile = DiffFileTreeFile> {
+export interface DiffFileTreeNode<F extends FileTreeInput = DiffFileTreeFile> {
   type: 'file' | 'folder';
   /** Display name: the file name, or the (possibly merged) folder segment(s). */
   name: string;
@@ -46,7 +51,7 @@ interface TrieNode<F> {
   file?: { index: number; data: F };
 }
 
-function buildTrie<F extends DiffFileTreeFile>(files: readonly F[]): TrieNode<F> {
+function buildTrie<F extends FileTreeInput>(files: readonly F[]): TrieNode<F> {
   const root: TrieNode<F> = { children: new Map() };
 
   for (let i = 0; i < files.length; i++) {
@@ -68,7 +73,7 @@ function buildTrie<F extends DiffFileTreeFile>(files: readonly F[]): TrieNode<F>
   return root;
 }
 
-function trieToNodes<F extends DiffFileTreeFile>(
+function trieToNodes<F extends FileTreeInput>(
   trie: TrieNode<F>,
   parentPath: string,
   depth: number,
@@ -87,8 +92,8 @@ function trieToNodes<F extends DiffFileTreeFile>(
         depth,
         fileIndex: child.file.index,
         file: child.file.data,
-        additions: child.file.data.additions,
-        deletions: child.file.data.deletions,
+        additions: child.file.data.additions ?? 0,
+        deletions: child.file.data.deletions ?? 0,
       });
     } else {
       const children = trieToNodes(child, fullPath, depth + 1);
@@ -113,7 +118,7 @@ function trieToNodes<F extends DiffFileTreeFile>(
   return [...folders, ...fileNodes];
 }
 
-function collapseSingleChild<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode<F>[]): DiffFileTreeNode<F>[] {
+function collapseSingleChild<F extends FileTreeInput>(nodes: DiffFileTreeNode<F>[]): DiffFileTreeNode<F>[] {
   return nodes.map(node => {
     if (node.type !== 'folder' || !node.children) return node;
 
@@ -138,7 +143,7 @@ function collapseSingleChild<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode
   });
 }
 
-function fixDepths<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode<F>[], depth: number): DiffFileTreeNode<F>[] {
+function fixDepths<F extends FileTreeInput>(nodes: DiffFileTreeNode<F>[], depth: number): DiffFileTreeNode<F>[] {
   return nodes.map(node => ({
     ...node,
     depth,
@@ -146,7 +151,7 @@ function fixDepths<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode<F>[], dep
   }));
 }
 
-export function buildDiffFileTree<F extends DiffFileTreeFile>(files: readonly F[]): DiffFileTreeNode<F>[] {
+export function buildDiffFileTree<F extends FileTreeInput>(files: readonly F[]): DiffFileTreeNode<F>[] {
   if (files.length === 0) return [];
 
   const trie = buildTrie(files);
@@ -177,7 +182,7 @@ export function getAncestorPaths(filePath: string): string[] {
 }
 
 /** File indexes in the order the tree renders them (ignores collapse state). */
-export function getVisualFileOrder<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode<F>[]): number[] {
+export function getVisualFileOrder<F extends FileTreeInput>(nodes: DiffFileTreeNode<F>[]): number[] {
   const order: number[] = [];
   for (const node of nodes) {
     if (node.type === 'file' && node.fileIndex != null) {
@@ -189,7 +194,7 @@ export function getVisualFileOrder<F extends DiffFileTreeFile>(nodes: DiffFileTr
   return order;
 }
 
-export function getAllFolderPaths<F extends DiffFileTreeFile>(nodes: DiffFileTreeNode<F>[]): string[] {
+export function getAllFolderPaths<F extends FileTreeInput>(nodes: DiffFileTreeNode<F>[]): string[] {
   const paths: string[] = [];
   for (const node of nodes) {
     if (node.type === 'folder') {

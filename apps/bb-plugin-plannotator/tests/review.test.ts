@@ -1,32 +1,14 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { afterEach, describe, expect, it } from "vitest";
-import { createFakePluginHost, makeThreadResponse } from "@get-bb/plugin-sdk/testing";
+import { describe, expect, it } from "vitest";
+import { makeThreadResponse } from "@get-bb/plugin-sdk/testing";
 import plugin from "../server";
 import { rpcContract, type ReviewDocument } from "../contracts";
 import { targetOf } from "../contracts";
 
-const disposers: (() => Promise<void>)[] = [];
-afterEach(async () => { for (const dispose of disposers.splice(0).reverse()) await dispose(); });
-export async function setup() {
-  const root = await mkdtemp(join(tmpdir(), "bb-review-test-"));
-  await writeFile(join(root, "plan.md"), "# Plan\n\nThe agent should revise this document.\n");
-  const state = { root, content: "", sent: [] as string[], failSend: false };
-  const host = createFakePluginHost({ pluginId: "plannotator", sdk: {
-    threads: { get: async ({ threadId }) => makeThreadResponse({ id: threadId, environmentId: "environment-1" }),
-      send: async ({ input }) => { state.sent.push(JSON.stringify(input)); if (state.failSend) throw new Error("Connection lost after accepting message"); return {}; },
-      promptHistory: async () => ({ prompts: state.sent }), },
-    environments: { get: async () => ({ id: "environment-1", status: "ready", path: state.root, hostId: "host-1" }) },
-    files: { listPaths: async () => ({ paths: [{ path: "plan.md", kind: "file" }], truncated: false }),
-      read: async ({ path, rootPath }) => { expect(rootPath).toBe(state.root); const content = await readFile(path, "utf8"); return { content, contentEncoding: "utf8", sizeBytes: Buffer.byteLength(content) }; } },
-  } });
-  await plugin(host.bb);
-  disposers.push(async () => { await host.harness.lifecycle.dispose(); await rm(root, { recursive: true, force: true }); });
-  const open = async (threadId = "thread-1", sha256?: string) => rpcContract.open.output.parse(await host.harness.behavior.callRpc("open", { threadId, path: "plan.md", ...(sha256 ? { sha256 } : {}) }));
-  return { ...host, state, open };
-}
-export function annotation() { return { id: "comment-1", blockId: "block-1", startOffset: 0, endOffset: 0, type: "GLOBAL_COMMENT" as const, originalText: "", text: "Add explicit acceptance criteria.", createdA: 1 }; }
+import { setup, annotation, disposeAfter } from "./review-fixture";
+
 async function addComment(harness: Awaited<ReturnType<typeof setup>>["harness"], doc: ReviewDocument) {
   const saved = await harness.behavior.callRpc("save", { ...targetOf(doc), annotations: [annotation()] }) as { revision: number };
   return { ...doc, revision: saved.revision };
@@ -44,7 +26,7 @@ describe("versioned BB document review", () => {
     const first = await open(); await addComment(harness, first);
     await writeFile(join(state.root, "plan.md"), "# Revised plan\n\nAcceptance criteria included.\n");
     const fresh = await harness.lifecycle.reload(plugin);
-    disposers.push(() => fresh.harness.lifecycle.dispose());
+    disposeAfter(() => fresh.harness.lifecycle.dispose());
     const latest = rpcContract.open.output.parse(await fresh.harness.behavior.callRpc("open", { threadId: "thread-1", path: "plan.md" }));
     const earlier = rpcContract.open.output.parse(await fresh.harness.behavior.callRpc("open", { threadId: "thread-1", path: "plan.md", sha256: first.sha256 }));
     expect(latest.annotations).toEqual([]);
@@ -63,7 +45,7 @@ describe("versioned BB document review", () => {
     await writeFile(join(state.root, "plan.md"), "# Changed\n");
     await expect(harness.behavior.callRpc("send", { ...targetOf(first), action: "feedback" })).rejects.toThrow(/changed on disk/);
     const moved = await mkdtemp(join(tmpdir(), "bb-review-moved-"));
-    disposers.push(() => rm(moved, { recursive: true, force: true }));
+    disposeAfter(() => rm(moved, { recursive: true, force: true }));
     await writeFile(join(moved, "plan.md"), first.content); state.root = moved;
     await expect(harness.behavior.callRpc("send", { ...targetOf(first), action: "approve" })).rejects.toThrow(/another working folder/);
     expect(state.sent).toHaveLength(0);

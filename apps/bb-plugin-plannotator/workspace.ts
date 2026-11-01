@@ -13,8 +13,8 @@ export async function workspace(bb: BbPluginApi, threadId: string) {
   if (!paths.isAbsolute(environment.path)) throw new Error("The working folder must be an absolute path.");
   return { threadId, environmentId: environment.id, hostId: environment.hostId, checkoutRoot: paths.normalize(environment.path), paths };
 }
-export async function readDocument(bb: BbPluginApi, threadId: string, input: string) {
-  const source = await workspace(bb, threadId);
+export async function readDocument(bb: BbPluginApi, threadId: string, input: string, resolved?: Awaited<ReturnType<typeof workspace>>) {
+  const source = resolved ?? await workspace(bb, threadId);
   const relative = documentPath.parse(input);
   const result = await bb.sdk.files.read({ hostId: source.hostId, rootPath: source.checkoutRoot, path: source.paths.join(source.checkoutRoot, relative) });
   if (result.contentEncoding !== "utf8" || result.content.includes("\0")) throw new Error("Choose a UTF-8 Markdown file.");

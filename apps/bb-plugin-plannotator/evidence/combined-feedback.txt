@@ -1,0 +1,31 @@
+Combined review feedback for spec set "samples/spec-set-demo".
+
+Review feedback for "samples/spec-set-demo/blocks/a1-foundation/design.md" at SHA-256 3e625ba6018f6d995e9900ff67e2efea992bddf43ed12bebd18c5f18c49b7a06.
+
+# Document feedback
+
+I've reviewed this document and have 1 piece of feedback:
+
+## 1. General feedback about the document
+
+Explain how combined feedback stays grouped by document and version.
+
+---
+
+
+---
+
+Review feedback for "samples/spec-set-demo/requirements.md" at SHA-256 ab44b35260d965a232f67444c0379058347ebc836c9bbc7c6971d82b26d13cb9.
+
+# Document feedback
+
+I've reviewed this document and have 1 piece of feedback:
+
+## 1. General feedback about the document
+
+Clarify that approval applies only to this document version.
+
+---
+
+
+Revise the documents to address their feedback using your normal file tools. Check each document’s current contents before editing and consider related comments together. Keep changes within this spec set unless the user requests otherwise. Stay within document revision; do not implement code or advance another stage unless the user requests it.

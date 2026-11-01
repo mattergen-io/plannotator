@@ -1,6 +1,6 @@
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import type { ReviewTarget } from "./contracts";
-import { annotationsSchema } from "./contracts";
+import { reviewStatus, annotationsSchema } from "./contracts";
 import type { readDocument } from "./workspace";
 
 type Source = Awaited<ReturnType<typeof readDocument>>;
@@ -40,6 +40,12 @@ export function reviewStore(bb: BbPluginApi) {
         revision: row.revision, baseline: baseline.content, approvedAt: row.approvedAt,
         versions: versions.map(v => ({ sha256: v.sha256, updatedAt: v.updatedAt, approvedAt: v.approvedAt, commentCount: JSON.parse(v.annotations).length })) };
     },
+    summary: (source: Source) => {
+      const version = get(source.id, source.sha256)!;
+      const row = db.prepare("SELECT baselineSha FROM review_documents WHERE id=?").get(source.id) as { baselineSha: string | null };
+      return { path: source.path, id: source.id, sha256: source.sha256, revision: version.revision,
+        status: reviewStatus(row.baselineSha, source.sha256, version.approvedAt), commentCount: JSON.parse(version.annotations).length, error: null };
+    },
     save: db.transaction((target: ReviewTarget, annotations: unknown) => {
       requireVersion(target);
       const serialized = JSON.stringify(annotationsSchema.parse(annotations));
@@ -58,3 +64,5 @@ export function reviewStore(bb: BbPluginApi) {
     putDelivery: (key: string, delivery: Delivery) => db.prepare("INSERT INTO review_deliveries VALUES (?,?) ON CONFLICT(key) DO UPDATE SET data=excluded.data").run(key, JSON.stringify(delivery)),
   };
 }
+
+export type ReviewStore = ReturnType<typeof reviewStore>;

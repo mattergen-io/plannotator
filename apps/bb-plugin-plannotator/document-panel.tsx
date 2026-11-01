@@ -9,11 +9,12 @@ import { computeDocumentChanges } from "@plannotator/ui/hooks/useDocumentChanges
 import { parseMarkdownToBlocks } from "@plannotator/ui/utils/parser";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
-import { targetOf } from "./contracts";
+import { targetOf, parentFolder, feedbackSelection } from "./contracts";
+import { SpecTree } from "./spec-tree";
 
 export function DocumentPanel({ threadId, initialPath }: { threadId: string; initialPath?: string }) {
   const review = useReview(threadId, initialPath), composer = useComposer();
-  const [path, setPath] = useState(initialPath ?? ""), [selected, setSelected] = useState<string | null>(null);
+  const [folder, setFolder] = useState(initialPath ? parentFolder(initialPath) : ".kiro/specs"), [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<EditorMode>("selection"), [inputMethod, setInputMethod] = useState<InputMethod>("drag");
   const [notesOpen, setNotesOpen] = useState(false);
   const [viewport, setViewport] = useState<HTMLElement | null>(null);
@@ -36,14 +37,17 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
     return () => element.remove();
   }, []);
   useEffect(() => {
-    if (doc) setPath(doc.path);
     setSelected(null); setUncertain(null); setNotesOpen(!!doc?.annotations.length);
   }, [doc?.id, doc?.sha256]);
+  useEffect(() => { if (review.specSet) setFolder(review.specSet.folder); }, [review.specSet?.folder]);
+  const feedbackCount = review.specSet?.files.reduce((count, file) => count + file.commentCount, 0) ?? 0;
   async function prepare() {
     await review.flush();
     const current = review.current.current;
     if (!current) throw new Error("Open a document first.");
-    return review.rpc.call("prepare", { ...targetOf(current), action: "feedback" });
+    const set = review.currentSet.current;
+    if (!set) throw new Error("Select a spec set first.");
+    return review.rpc.call("prepare", { ...targetOf(current), action: "feedback", set: feedbackSelection(set) });
   }
   function addToChat() {
     void review.run(async () => {
@@ -55,9 +59,10 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   function send(action: "feedback" | "approve", resend = false) {
     void review.run(async () => {
       await review.flush(); const current = review.current.current; if (!current) return;
-      const result = await review.rpc.call("send", { ...targetOf(current), action, resend });
+      const set = review.currentSet.current;
+      const result = await review.rpc.call("send", { ...targetOf(current), action, resend, ...(action === "feedback" && set ? { set: feedbackSelection(set) } : {}) });
       setUncertain(result.status === "uncertain" ? action : null);
-      review.setNotice(result.status === "sent" ? action === "approve" ? "Approval sent. The agent will acknowledge and wait." : "Feedback sent to this conversation." : result.error);
+      review.setNotice(result.status === "sent" ? action === "approve" ? "Approval sent. The agent will acknowledge and wait." : "Combined feedback sent to this conversation." : result.error);
       await review.load(current.path);
     });
   }
@@ -67,14 +72,15 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
     composer.insert(`From ${JSON.stringify(doc.path)} (SHA-256 ${doc.sha256}):\n\n${context.text.split("\n").map(line => `> ${line}`).join("\n")}`, { at: "end", block: true }); composer.focus();
   } }] : [];
   return <div className="bb-plannotator-ui bb-plannotator-panel theme-plannotator">
-    <form className="bb-review-path" onSubmit={event => { event.preventDefault(); void review.run(() => review.load(path)); }}>
-      <label htmlFor={`review-path-${threadId}`}>Document</label>
-      <input id={`review-path-${threadId}`} aria-label="Markdown document path" list={`review-files-${threadId}`} value={path} onChange={event => setPath(event.target.value)} placeholder=".kiro/specs/feature/requirements.md" disabled={review.busy} />
-      <datalist id={`review-files-${threadId}`}>{review.files.map(file => <option key={file} value={file} />)}</datalist>
-      <button disabled={review.busy || !path.trim()} type="submit">Open</button>
-      <button disabled={review.busy || !doc} onClick={review.refresh} type="button">Refresh</button>
+    <form className="bb-review-path" onSubmit={event => { event.preventDefault(); void review.run(() => review.loadSet(folder)); }}>
+      <label htmlFor={`review-folder-${threadId}`}>Spec set</label>
+      <input id={`review-folder-${threadId}`} aria-label="Spec set folder" list={`review-folders-${threadId}`} value={folder} onChange={event => setFolder(event.target.value)} placeholder=".kiro/specs/my-feature" disabled={review.busy} />
+      <datalist id={`review-folders-${threadId}`}>{review.folders.map(path => <option key={path} value={path} />)}</datalist>
+      <button disabled={review.busy || !folder.trim()} type="submit">Open set</button>
+      <button disabled={review.busy || !review.specSet} onClick={review.refresh} type="button">Refresh</button>
     </form>
-    {review.truncated && <div className="bb-review-status">Some files were omitted from suggestions. Enter any checkout-relative Markdown path.</div>}
+    {review.truncated && <div className="bb-review-status">Some folder suggestions were omitted. Enter any checkout-relative spec folder.</div>}
+    {review.specSet && <SpecTree specSet={review.specSet} selectedPath={doc?.path ?? null} busy={review.busy} onSelect={path => void review.run(() => review.load(path))} />}
     {review.error && <div role="alert" className="bb-review-error">{review.error}
       {review.dirty && doc && <button disabled={review.busy} onClick={() => void review.run(() => review.load(doc.path, doc.sha256, true))}>Discard local edits and reload saved feedback</button>}
     </div>}
@@ -84,15 +90,16 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
         <span>{doc.path}</span><span>{review.dirty ? "Saving feedback…" : "Feedback saved"} · {doc.sha256.slice(0, 8)}{doc.approvedAt ? " · Approved" : ""}</span>
       </div>
       <div className="bb-review-actions">
-        <button onClick={addToChat} disabled={review.busy || !annotations.length || historical}>Add to chat</button>
-        <button onClick={() => send("feedback")} disabled={review.busy || !annotations.length || historical}>Send feedback</button>
-        <button disabled={review.busy || historical} onClick={() => void review.run(async () => {
+        <button onClick={addToChat} disabled={review.busy || !feedbackCount || historical}>Add to chat</button>
+        <button onClick={() => send("feedback")} disabled={review.busy || !feedbackCount || historical}>Send feedback</button>
+        <button title="Mark only the displayed document as reviewed" disabled={review.busy || historical} onClick={() => void review.run(async () => {
           await review.flush(); const current = review.current.current; if (!current) return;
           await review.rpc.call("reviewed", targetOf(current)); await review.load(current.path); review.setNotice("Reviewed baseline updated.");
         })}>Reviewed</button>
-        <button className="bb-review-approve" onClick={() => send("approve")} disabled={review.busy || historical}>Approve</button>
+        <button title="Approve only the displayed document" className="bb-review-approve" onClick={() => send("approve")} disabled={review.busy || historical}>Approve</button>
         <button aria-expanded={notesOpen} onClick={() => setNotesOpen(!notesOpen)}>Comments ({annotations.length})</button>
       </div>
+      <div className="bb-review-scope">Feedback includes comments across this set. Reviewed and Approve apply to this document.</div>
       {uncertain && <div className="bb-review-error">Check the conversation before resending. <button onClick={() => send(uncertain, true)} disabled={review.busy}>Resend</button></div>}
       <div className="bb-review-version">
         <label>Review version <select aria-label="Review version" disabled={review.busy} value={doc.sha256} onChange={event => void review.run(() => review.load(doc.path, event.target.value))}>
@@ -122,6 +129,6 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
           {!annotations.length && <p className="bb-review-empty-comments">Select text or choose Global comment to add feedback.</p>}
         </div>}
       </ScrollViewportProvider></PortalProvider>}
-    </> : <div className="bb-review-empty">{review.busy ? "Opening document…" : "Open a Markdown document from this thread’s working folder to start a review."}</div>}
+    </> : <div className="bb-review-empty">{review.busy ? "Opening document…" : "Choose a spec folder from this thread’s working folder to start a review."}</div>}
   </div>;
 }

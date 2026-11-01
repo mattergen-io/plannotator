@@ -83,13 +83,13 @@
           "fast",
           "refreshes after each agent reply"
         ],
-        "comment": "CommentYou (me) \u00b7 now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
-        "removed": "Removed text since reviewPrevious line 3**slow** \u2026 waits for a manual refreshPrevious line 7This obsolete paragraph will be removed in the next revision.\n\n"
+        "comment": "CommentYou (me) · now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
+        "removed": "Removed text since reviewPrevious line 3**slow** … waits for a manual refreshPrevious line 7This obsolete paragraph will be removed in the next revision.\n\n"
       },
       "after": {
         "changedBlocks": 0,
         "addedWords": [],
-        "comment": "CommentYou (me) \u00b7 now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
+        "comment": "CommentYou (me) · now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
         "removed": false
       }
     },
@@ -98,5 +98,90 @@
     "noLiveAgentMessageSent": true,
     "baseline": "# Automatic review highlights\n\nThis review uses the **slow** path and waits for a manual refresh.\n\nKeep this paragraph unchanged so the review stays easy to read.\n\nThis obsolete paragraph will be removed in the next revision.\n\n## Acceptance criteria\n\n- Select changed text and save a comment.\n- Reviewed resets the displayed baseline.\n",
     "current": "# Automatic review highlights\n\nThis review uses the **fast** path and refreshes after each agent reply.\n\nKeep this paragraph unchanged so the review stays easy to read.\n\n## Acceptance criteria\n\n- Select changed text and save a comment.\n- Reviewed resets the displayed baseline.\n\n## Newly added behavior\n\nChanges appear automatically in the main review document.\n"
+  },
+  "specSetSelector": {
+    "capturedAt": "2026-11-01T02:11:51.021591+00:00",
+    "checks": [
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator test",
+        "result": "33 passed"
+      },
+      {
+        "command": "DOM_TESTS=1 bun test ./packages/ui/utils/diffFileTree.test.ts ./packages/ui/components/DiffFileTree.test.tsx ./packages/ui/components/Viewer.documentHeader.test.tsx ./packages/ui/components/AnnotationToolbar.selectionActions.test.tsx",
+        "result": "42 passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator typecheck && bun run --cwd packages/ui typecheck",
+        "result": "passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator build",
+        "result": "passed"
+      },
+      {
+        "command": "bb plugin reload plannotator",
+        "result": "running"
+      }
+    ],
+    "graze": {
+      "folder": ".kiro/specs/graze-framework",
+      "documentCount": 20,
+      "unavailable": 0,
+      "matchedFilesystemInventory": true,
+      "command": "bb plugin rpc call plannotator specSet --input-file /tmp/plannotator-spec-set/graze-set-input.json --json; compare returned paths with Markdown files from pathlib.Path(spec_folder).rglob(\"*\")",
+      "previousSelectionRestored": true,
+      "projectFilesModified": false
+    },
+    "native": {
+      "tree": "Documents (6)5 need reviewblocks3 need reviewa1-foundation2 need reviewdesign.mdReviewed1 commentevidence.mdNeeds reviewrequirements.mdNeeds reviewa2-authentication1 needs reviewrequirements.mdNeeds reviewrequirements.mdChanged1 commentroadmap.mdNeeds review",
+      "active": "requirements.mdChanged1 comment",
+      "collapsed": [
+        "a2-authentication1 needs review"
+      ],
+      "highlightedBlocks": 1,
+      "comments": "GlobalYou (me) · 5mClarify that approval applies only to this document version."
+    },
+    "neverReviewedDocument": {
+      "status": "requirements.mdNeeds review",
+      "highlightedBlocks": 0,
+      "changeLegend": null
+    },
+    "setAndDocumentRestoredAfterReload": true,
+    "combinedComposerFeedbackIncludesBothCommentedDocuments": true,
+    "composerDraftRestored": true,
+    "liveAgentMessageSent": false,
+    "freshAgent": {
+      "root": "/tmp/plannotator-spec-set-agent-SuYbMr",
+      "prompt": "Working folder: /tmp/plannotator-spec-set-agent-SuYbMr\n\nCombined review feedback for spec set \"specs/framework\".\n\nReview feedback for \"specs/framework/design.md\" at SHA-256 f6b74ed32088b717d75e87417c71efb90a27493ead56f87b669acbca48ebf5fd.\n\n# Document feedback\n\nI've reviewed this document and have 1 piece of feedback:\n\n## 1. General feedback about the document\n> Describe a document tree and a single viewer. Combined feedback covers current-version comments across the set, while Reviewed and Approve apply only to the open document.\n\n---\n\n\n---\n\nReview feedback for \"specs/framework/requirements.md\" at SHA-256 1b7592159e1b6e96331df278a0c6a38e6d2bc64c9528fafae46fa598d09c7ac1.\n\n# Document feedback\n\nI've reviewed this document and have 1 piece of feedback:\n\n## 1. General feedback about the document\n> Make acceptance criteria explicit: selecting a folder includes its Markdown descendants; the tree shows files needing review; first-time documents have no body highlights until a baseline exists.\n\n---\n\n\nRevise the documents to address their feedback using your normal file tools. Check each document’s current contents before editing and consider related comments together. Keep changes within this spec set unless the user requests otherwise. Stay within document revision; do not implement code or advance another stage unless the user requests it.",
+      "before": {
+        "implementation.ts": "b22c388de6042a934eb649ac8e216b88702321453f29cc59a902830076d4fadc",
+        "specs/framework/requirements.md": "1b7592159e1b6e96331df278a0c6a38e6d2bc64c9528fafae46fa598d09c7ac1",
+        "specs/framework/design.md": "f6b74ed32088b717d75e87417c71efb90a27493ead56f87b669acbca48ebf5fd",
+        "specs/framework/evidence.md": "09714428d8a6d0e09781e379c417af859efa2e4a8d3c2ec4e3dde17234684a25"
+      },
+      "after": {
+        "implementation.ts": "b22c388de6042a934eb649ac8e216b88702321453f29cc59a902830076d4fadc",
+        "specs/framework/requirements.md": "0a8a975f2cfce0ebb4d3290d011b0aae03758e53f57ae4f1681d62e7e8d731ef",
+        "specs/framework/design.md": "f7bc3b45921365fa7dcd5130c5c4c9a43fddb777ca89462025d52755bf97f307",
+        "specs/framework/evidence.md": "09714428d8a6d0e09781e379c417af859efa2e4a8d3c2ec4e3dde17234684a25"
+      },
+      "changed": {
+        "implementation.ts": false,
+        "specs/framework/requirements.md": true,
+        "specs/framework/design.md": true,
+        "specs/framework/evidence.md": false
+      },
+      "filesAfter": [
+        "implementation.ts",
+        "specs/framework/design.md",
+        "specs/framework/evidence.md",
+        "specs/framework/requirements.md"
+      ],
+      "revisedDocuments": {
+        "specs/framework/requirements.md": "# Spec review\n\nUsers can select a folder of documents and review its Markdown documents as a set, navigating through a document tree while reading one document at a time.\n\n## Acceptance criteria\n\n1. Selecting a folder includes every Markdown file in that folder and all of its descendant folders in the review set.\n2. The review panel shows the included documents in a tree that preserves their folder hierarchy and identifies the files that need review.\n3. Selecting a document in the tree opens it in a single viewer. Selecting another document replaces the viewer's contents with that document.\n4. Combined feedback includes comments for the current version of every document in the selected set, including documents that are not open. Comments on older versions are excluded, and each comment remains associated with its document.\n5. The Reviewed and Approve actions apply only to the document currently open in the viewer. Using either action does not mark any other document as reviewed or approved.\n6. A first-time document without a comparison baseline is shown without body change highlights. Body change highlights are available only when a baseline exists.\n",
+        "specs/framework/design.md": "# Design\n\n## Review set and document tree\n\nSelecting a folder creates a review set containing its Markdown files recursively, including those in descendant folders. The review panel presents the set as a document tree that preserves the selected folder's hierarchy. Each file entry shows its review status so the user can identify documents that still need review.\n\n## Single document viewer\n\nThe panel has one document viewer alongside the tree. Selecting a file makes it the open document and loads its contents into that viewer; selecting another file replaces the displayed document. The selected tree entry and the viewer refer to the same open document.\n\nReviewed and Approve operate on the open document only. Their results update that document's status in the tree without changing the review or approval status of other documents in the set.\n\n## Combined feedback\n\nCombined feedback gathers comments across the entire selected review set, independently of which document is open. For each document, it includes only comments associated with that document's current version and excludes comments from older versions. The combined output groups comments by document and identifies the document and version they apply to.\n\nCombining feedback does not mark documents as reviewed or approved. Those actions remain scoped to the open document.\n\n## Comparison baseline\n\nThe viewer uses a document's existing comparison baseline to show body change highlights. A first-time document without a baseline displays its Markdown body without change highlights; its entire body is not treated as a highlighted addition. Once a baseline exists, the viewer can highlight changes relative to it.\n"
+      },
+      "hashCommand": "sha256sum implementation.ts specs/framework/requirements.md specs/framework/design.md specs/framework/evidence.md (in the recorded scratch root)"
+    }
   }
 }

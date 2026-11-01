@@ -82,6 +82,16 @@ describe('buildDiffFileTree', () => {
     expect(getVisualFileOrder(tree)).toEqual([1, 0]);
   });
 
+  test('document hosts can reuse the hierarchy without supplying fake diff metadata', () => {
+    const documents = [{ path: 'spec/a/requirements.md', review: 'pending' }, { path: 'spec/design.md', review: 'reviewed' }];
+    const tree = buildDiffFileTree(documents);
+    expect(tree[0].name).toBe('spec');
+    expect(tree[0].additions).toBe(0);
+    expect(tree[0].deletions).toBe(0);
+    expect(tree[0].children![0].children![0].file).toBe(documents[0]);
+    expect(getVisualFileOrder(tree)).toEqual([0, 1]);
+  });
+
   test('empty input is an empty tree', () => {
     expect(buildDiffFileTree([])).toEqual([]);
   });

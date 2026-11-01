@@ -24,3 +24,22 @@
 .bb-plannotator-panel .bb-review-removed span { font-size:11px; color:var(--muted-foreground); }
 .bb-plannotator-panel .bb-review-removed-content { display:block; overflow-wrap:anywhere; color:#c36a6a; margin:4px 0 10px; }
 .bb-plannotator-panel .bb-review-removed-content * { color:inherit; font-size:inherit; margin-block:4px; }
+
+.bb-plannotator-panel .bb-review-tree { flex-shrink:0; border-bottom:1px solid var(--border); font-size:12px; }
+.bb-plannotator-panel .bb-review-tree > summary { padding:7px 10px; cursor:pointer; }
+.bb-plannotator-panel .bb-review-tree nav { max-height:220px; overflow:auto; padding:0 8px 6px; }
+.bb-plannotator-panel .bb-review-tree ul { list-style:none; padding:0; margin:0; }
+.bb-plannotator-panel .bb-review-tree li > details > ul { padding-left:14px; }
+.bb-plannotator-panel .bb-review-tree li summary { cursor:pointer; padding:5px 4px; }
+.bb-plannotator-panel .bb-review-tree-file { display:flex; width:100%; align-items:center; gap:8px; text-align:left; border:0; background:transparent; padding:5px 6px; }
+.bb-plannotator-panel .bb-review-tree-file[aria-current] { background:var(--muted); outline:1px solid var(--primary); outline-offset:-1px; }
+.bb-plannotator-panel .bb-review-tree-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bb-plannotator-panel .bb-review-file-status { margin-left:auto; flex-shrink:0; font-size:10px; }
+.bb-plannotator-panel .bb-review-pending-count { margin-left:10px; color:color-mix(in srgb,#d8aa45 65%,var(--foreground)); font-size:10px; }
+.bb-plannotator-panel .bb-review-file-unreviewed, .bb-plannotator-panel .bb-review-file-changed { color:color-mix(in srgb,#d8aa45 65%,var(--foreground)); }
+.bb-plannotator-panel .bb-review-file-reviewed, .bb-plannotator-panel .bb-review-file-approved, .bb-plannotator-panel .bb-review-tree-complete { color:color-mix(in srgb,#45b87b 65%,var(--foreground)); }
+.bb-plannotator-panel .bb-review-file-unavailable, .bb-plannotator-panel .bb-review-file-error { color:#c36a6a; }
+.bb-plannotator-panel .bb-review-file-error { font-size:11px; padding:2px 6px; overflow-wrap:anywhere; }
+.bb-plannotator-panel .bb-review-comment-count { font-size:10px; color:var(--muted-foreground); flex-shrink:0; }
+.bb-plannotator-panel .bb-review-tree-complete { margin-left:10px; font-size:10px; }
+.bb-plannotator-panel .bb-review-scope { font-size:11px; padding:4px 10px; color:var(--muted-foreground); }

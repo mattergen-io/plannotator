@@ -601,3 +601,8 @@ npm install @plannotator/ui @plannotator/core
 ### Automatic document change paint
 
 `Viewer.documentChanges` accepts the blocks from `computeDocumentChanges(baseline, content)` in `hooks/useDocumentChanges`. It paints additions and edits in the normal document, with native CSS range highlights for added words in eligible prose. It does not insert text wrappers or alter block ids, so annotation anchors stay stable when the baseline resets. Unsupported range-highlighting APIs fall back to block paint. Omit the prop to retain the existing viewer behavior. The embedding host can show removed text outside the viewer's annotation root, as the BB panel does with `RenderedMarkdown`.
+
+
+### Reusing the document hierarchy
+
+`buildDiffFileTree` and its navigation helpers in `utils/diffFileTree` accept any `FileTreeInput` with a `path`; diff counts are optional and default to zero. Existing diff callers retain their status/count behavior. The BB spec tree supplies its own review status and comment metadata without inventing diff statuses.
