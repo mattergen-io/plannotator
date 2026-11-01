@@ -113,6 +113,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
       {historical && <div className="bb-review-status">Viewing an earlier document version and its saved feedback. <button onClick={() => void review.run(() => review.load(doc.path))}>View current</button></div>}
       {portal && <PortalProvider container={portal}><ScrollViewportProvider viewport={viewport}>
         <div ref={setViewport} className="bb-review-document" aria-label="Review document">
+          <div className="bb-review-reading-column">
           <Viewer key={`${doc.id}:${doc.sha256}`} ref={viewer} blocks={blocks} markdown={doc.content} annotations={annotations} mode={mode} inputMethod={inputMethod} taterMode={false}
             onAddAnnotation={annotation => { review.edit(current => [...current, annotation]); setNotesOpen(true); }} onSelectAnnotation={setSelected} selectedAnnotationId={selected}
             onDeleteAnnotation={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}
@@ -125,6 +126,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
             <h3>Removed text since review</h3>
             {removals.map((removed, index) => <div key={index}><span>Previous line {removed.line}</span><del className="bb-review-removed-content"><RenderedMarkdown markdown={removed.content} resolveLocalLink={() => ({ kind: "unavailable", title: "Removed text from the previous review." })} resolveImage={() => ({ kind: "unavailable", title: "Image from the previous review." })} /></del></div>)}
           </section>}
+          </div>
         </div>
         {notesOpen && <div className="bb-review-comments"><AnnotationPanel presentation="embedded" isOpen annotations={annotations} blocks={blocks} selectedId={selected} onSelect={setSelected}
           onDelete={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}

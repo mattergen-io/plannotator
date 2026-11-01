@@ -55,7 +55,7 @@ Comments are stored per thread, checkout identity, file, and content hash in the
 
 Thread completion/failure signals and reconnect refresh the selected set, including unopened documents. External edits can use **Refresh**. A never-reviewed document has no body change highlights. After its first Reviewed/Approved baseline exists, the main document automatically highlights changes against that baseline. Added blocks are green; edited blocks are amber, with added words highlighted inside eligible prose. Removed text is rendered below the document. There is no separate changes-view toggle. Text selection and annotations use the same document throughout; resetting the baseline clears its change paint without changing comment anchors.
 
-Review actions and history share a compact header, with **Review version** at the upper right. The duplicate file/save-status strip is removed; transient save progress stays inline. Host-scoped spacing brings the document toolbar and title up without changing standalone Plannotator styling.
+Review actions and history share a compact header, with **Review version** at the upper right. The duplicate file/save-status strip is removed; transient save progress stays inline. Host-scoped spacing brings the document toolbar and title up without changing standalone Plannotator styling. The Markdown viewer, document toolbar, and removed-text section share a centered column capped at 960 px, which shrinks to the available width in narrower panels.
 
 ## Implementation
 
@@ -89,3 +89,11 @@ This is a local development installation. Git/npm release packaging remains sepa
 
 The phase-aware spec and Beads factory work is tracked in
 [the factory implementation plan](bb-factory.md).
+
+## Bounded document width follow-up
+
+- [x] Center the Markdown reading column with a 960 px maximum, including the document toolbar and removed text.
+- [x] Verify the native panel at a 2048 × 1123 viewport and a narrower panel: column widths were 960 px and 473 px, respectively, with no horizontal document overflow.
+- [x] Pass the nine existing panel tests, plugin typecheck, build and reload.
+
+Native captures: [wide reading column](../../apps/bb-plugin-plannotator/assets/native-bounded-markdown-wide.jpg) and [narrow reading column](../../apps/bb-plugin-plannotator/assets/native-bounded-markdown-narrow.jpg).

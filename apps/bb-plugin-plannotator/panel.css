@@ -6,6 +6,7 @@
 .bb-plannotator-panel .bb-review-actions { display:flex; flex:1 0 auto; flex-wrap:wrap; max-width:100%; gap:6px; }
 .bb-plannotator-panel .bb-review-approve { border-color:var(--primary); }
 .bb-plannotator-panel .bb-review-document { flex:1; min-height:140px; overflow:auto; padding:4px 14px 24px; position:relative; }
+.bb-plannotator-panel .bb-review-reading-column { width:100%; max-width:960px; margin-inline:auto; }
 .bb-plannotator-panel .bb-review-comments { flex:0 1 28%; min-height:70px; max-height:230px; overflow:auto; border-top:1px solid var(--border); }
 .bb-plannotator-panel .bb-review-empty, .bb-plannotator-panel .bb-review-empty-comments { padding:18px; color:var(--muted-foreground); }
 .bb-plannotator-panel .bb-review-status, .bb-plannotator-panel .bb-review-error { padding:7px 10px; overflow-wrap:anywhere; border-bottom:1px solid var(--border); font-size:12px; }
