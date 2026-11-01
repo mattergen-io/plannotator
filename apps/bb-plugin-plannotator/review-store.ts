@@ -4,6 +4,7 @@ import { reviewStatus, annotationsSchema } from "./contracts";
 import type { readDocument } from "./workspace";
 
 type Source = Awaited<ReturnType<typeof readDocument>>;
+type SourceMetadata = Omit<Source, "content">;
 export type Version = { content: string; annotations: string; revision: number; approvedAt: string | null; updatedAt: string; sha256: string };
 export type Delivery = { id: string; threadId: string; text: string; status: "pending" | "uncertain" | "sent"; error: string | null };
 export function reviewStore(bb: BbPluginApi) {
@@ -11,10 +12,18 @@ export function reviewStore(bb: BbPluginApi) {
   bb.storage.migrate(db, [`CREATE TABLE review_documents (id TEXT PRIMARY KEY, threadId TEXT NOT NULL, path TEXT NOT NULL, source TEXT NOT NULL, baselineSha TEXT);
     CREATE TABLE review_versions (documentId TEXT NOT NULL, sha256 TEXT NOT NULL, content TEXT NOT NULL, annotations TEXT NOT NULL DEFAULT '[]', revision INTEGER NOT NULL DEFAULT 0,
       approvedAt TEXT, updatedAt TEXT NOT NULL, PRIMARY KEY(documentId, sha256));
-    CREATE TABLE review_deliveries (key TEXT PRIMARY KEY, data TEXT NOT NULL);`]);
+    CREATE TABLE review_deliveries (key TEXT PRIMARY KEY, data TEXT NOT NULL);`,
+    `INSERT OR IGNORE INTO review_versions (documentId,sha256,content,updatedAt)
+      SELECT id,json_extract(source,'$.sha256'),json_extract(source,'$.content'),datetime('now')
+      FROM review_documents WHERE json_type(source,'$.sha256')='text' AND json_type(source,'$.content')='text';
+    UPDATE review_documents SET source=json_remove(source,'$.content')
+      WHERE json_type(source,'$.content')='text' AND EXISTS (
+        SELECT 1 FROM review_versions v WHERE v.documentId=review_documents.id AND v.sha256=json_extract(review_documents.source,'$.sha256')
+          AND v.content=json_extract(review_documents.source,'$.content')
+      );`]);
   const getSource = (id: string) => {
     const row = db.prepare("SELECT source FROM review_documents WHERE id=?").get(id) as { source: string } | undefined;
-    return row ? JSON.parse(row.source) as Source : null;
+    return row ? JSON.parse(row.source) as SourceMetadata : null;
   };
   const get = (id: string, sha256: string) => db.prepare("SELECT * FROM review_versions WHERE documentId=? AND sha256=?").get(id, sha256) as Version | undefined;
   const requireVersion = (target: ReviewTarget) => {
@@ -26,10 +35,11 @@ export function reviewStore(bb: BbPluginApi) {
   return {
     requireVersion, get, getSource,
     capture: (source: Source) => {
+      const { content, ...metadata } = source;
       db.prepare("INSERT INTO review_documents VALUES (?, ?, ?, ?, NULL) ON CONFLICT(id) DO UPDATE SET source=excluded.source")
-        .run(source.id, source.threadId, source.path, JSON.stringify(source));
+        .run(source.id, source.threadId, source.path, JSON.stringify(metadata));
       db.prepare("INSERT INTO review_versions (documentId,sha256,content,updatedAt) VALUES (?,?,?,?) ON CONFLICT DO NOTHING")
-        .run(source.id, source.sha256, source.content, new Date().toISOString());
+        .run(source.id, source.sha256, content, new Date().toISOString());
     },
     view: (source: Source, selectedHash = source.sha256) => {
       const row = get(source.id, selectedHash);

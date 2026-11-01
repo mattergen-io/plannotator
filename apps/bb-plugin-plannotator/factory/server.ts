@@ -21,7 +21,7 @@ export function factory(bb: BbPluginApi, sets: SpecSets, store: ReviewStore) {
       const result = await plan.view(threadId, folder);
       if (
         result.runs.some((r) =>
-          ["running", "paused", "starting"].includes(r.state.stage),
+          ["running", "starting"].includes(r.state.stage),
         )
       ) {
         const source = await workspace(bb, threadId);

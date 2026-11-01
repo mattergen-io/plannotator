@@ -106,8 +106,10 @@ Only a final `FACTORY_REVIEW: PASS`, a clean unchanged reviewed tree, and passin
 integrated checks permit completion. Accepted-spec changes in a worker tree are
 rejected before its implementation is committed or sent for review.
 
-The five-second background service discovers registered run locations, then reloads
-state from Beads. Deterministic thread titles reconcile spawn intents after restart.
+The five-second background service checks registered run locations and reloads
+state from Beads. After confirming that a location has no starting or running runs,
+it removes that location from the polling registry. Starting, resuming, or retrying
+a run registers it again; errors keep the location registered for retry. Deterministic thread titles reconcile spawn intents after restart.
 Persisted stages recover check/review/integration steps. Completion records precede
 native bead closure so interrupted closure can be retried. Merge conflicts and failed
 checks/reviews spend the same two-correction budget. Explicit Retry starts a new

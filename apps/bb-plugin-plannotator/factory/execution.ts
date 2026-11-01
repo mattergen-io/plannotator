@@ -14,15 +14,17 @@ import { executionSteps } from "./execution-steps";
 import { runStart } from "./run-start";
 export function execution(bb: BbPluginApi, beads: BeadsClient, plan: Planning) {
   type Location = { hostId: string; root: string };
+  const registryKey = "factory-location-registry";
+  let registryRevision = 0;
+  const locationKey = (location: Location) => JSON.stringify([location.hostId, location.root]);
   async function remember(location: Location) {
-    const locations = ((await bb.storage.kv.get("factory-locations")) ??
-      []) as Location[];
-    if (
-      !locations.some(
-        (l) => l.hostId === location.hostId && l.root === location.root,
-      )
-    )
-      await bb.storage.kv.set("factory-locations", [...locations, location]);
+    await beads.locked(registryKey, async () => {
+      const key = locationKey(location);
+      registryRevision++;
+      const locations = ((await bb.storage.kv.get("factory-locations")) ?? []) as Location[];
+      if (!locations.some((item) => locationKey(item) === key))
+        await bb.storage.kv.set("factory-locations", [...locations, location]);
+    });
   }
   const steps = executionSteps(bb, beads);
   const authority = runAuthority(bb, beads);
@@ -32,6 +34,10 @@ export function execution(bb: BbPluginApi, beads: BeadsClient, plan: Planning) {
   const start = runStart(bb, beads, plan, remember, steps);
   async function tickLocation(location: Location) {
     const all = await beads.list(location.hostId, location.root);
+    const active = all.some((bead) => {
+      const parsed = runStateSchema.safeParse(bead.metadata?.bbFactory);
+      return parsed.success && ["starting", "running"].includes(parsed.data.stage);
+    });
     for (const bead of all) {
       const parsed = runStateSchema.safeParse(bead.metadata?.bbFactory);
       if (!parsed.success || parsed.data.stage !== "running") continue;
@@ -191,13 +197,30 @@ export function execution(bb: BbPluginApi, beads: BeadsClient, plan: Planning) {
         bb.realtime.publish("document-review", { threadId: run.threadId });
       });
     }
+    return active;
   }
   async function tick() {
-    const locations = ((await bb.storage.kv.get("factory-locations")) ??
-      []) as Location[];
-    for (const location of locations)
+    const entries = await beads.locked(registryKey, async () => {
+      const locations = ((await bb.storage.kv.get("factory-locations")) ?? []) as Location[];
+      return locations.map(location => ({ location, generation: registryRevision }));
+    });
+    for (const { location, generation } of entries)
       try {
-        await tickLocation(location);
+        const active = await tickLocation(location);
+        if (!active && registryRevision === generation)
+          await beads.locked(`${location.hostId}:${location.root}:execution`, async () => {
+            const current = await beads.list(location.hostId, location.root);
+            if (current.some((bead) => {
+              const parsed = runStateSchema.safeParse(bead.metadata?.bbFactory);
+              return parsed.success && ["starting", "running"].includes(parsed.data.stage);
+            })) return;
+            await beads.locked(registryKey, async () => {
+              const key = locationKey(location);
+              if (registryRevision !== generation) return;
+              const locations = ((await bb.storage.kv.get("factory-locations")) ?? []) as Location[];
+              await bb.storage.kv.set("factory-locations", locations.filter(item => locationKey(item) !== key));
+            });
+          });
       } catch (cause) {
         bb.log.warn(
           `Factory refresh failed (${location.root}): ${String(cause)}`,
@@ -237,7 +260,7 @@ export function execution(bb: BbPluginApi, beads: BeadsClient, plan: Planning) {
         run.error = null;
         await saveRun(runId, run);
         if (stage === "paused") await authority.gates(run, true);
-        await remember({ hostId: run.hostId, root: run.root });
+        if (stage === "running") await remember({ hostId: run.hostId, root: run.root });
         return plan.view(threadId, folder);
       },
     );

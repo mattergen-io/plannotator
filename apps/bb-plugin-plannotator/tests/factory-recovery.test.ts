@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { expect, it } from "vitest";
 import { factoryFixture, taskMarkdown } from "./factory-fixture";
 import { defaultRoles } from "../factory/model";
+import { execution } from "../factory/execution";
 async function tasksDraft(
   f: Awaited<ReturnType<typeof factoryFixture>>,
   markdown = taskMarkdown,
@@ -85,7 +86,9 @@ it("bounds parallel work and represents pause/resume through Beads readiness gat
     "",
   );
   const id = view.runs[0].bead.id;
-  await f.engine.tick();
+  // A newly constructed engine recovers running locations from durable storage.
+  const recovered = execution(f.bb, f.beads, f.plan);
+  await recovered.tick();
   expect(f.spawned).toHaveLength(2);
   const ready = await f.beads.json("host-1", f.root, [
     "ready",
@@ -99,7 +102,9 @@ it("bounds parallel work and represents pause/resume through Beads readiness gat
   ).toEqual([]);
   await f.engine.tick();
   expect(f.spawned).toHaveLength(2);
+  expect(await f.bb.storage.kv.get("factory-locations")).toEqual([]);
   await f.engine.change(f.threadId, f.folder, id, "running");
+  expect(await f.bb.storage.kv.get("factory-locations")).toEqual([{ hostId: "host-1", root: f.root }]);
   expect(
     await f.beads.json("host-1", f.root, ["ready", "--type", "task"]),
   ).toHaveLength(1);
