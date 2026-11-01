@@ -1,0 +1,27 @@
+{
+  "root": "/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6",
+  "control": "/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-control-nhrhsy3j",
+  "project": {
+    "id": "proj_6ea7sdxqsx",
+    "kind": "standard",
+    "name": "BB Factory acceptance",
+    "gitRemoteUrl": null,
+    "createdAt": 1793512609505,
+    "updatedAt": 1793512609505,
+    "sources": [
+      {
+        "id": "src_kup664fqdt",
+        "projectId": "proj_6ea7sdxqsx",
+        "type": "local_path",
+        "hostId": "host_tn4uudd9yw",
+        "path": "/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6",
+        "isDefault": true,
+        "createdAt": 1793512609505,
+        "updatedAt": 1793512609505
+      }
+    ]
+  },
+  "hostId": "host_tn4uudd9yw",
+  "plannerId": "thr_jubxaf3ew4",
+  "folder": ".kiro/specs/arithmetic-slice"
+}

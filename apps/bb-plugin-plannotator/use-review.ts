@@ -80,7 +80,8 @@ export function useReview(threadId: string, initialPath?: string) {
     const set = currentSet.current, doc = current.current;
     void run(async () => {
       const session = await rpc.call("session", { threadId }); setSpecs(session.specs); setTruncated(session.truncated);
-      if (set) await loadSet(set.folder, doc?.path, doc && doc.sha256 !== doc.currentSha256 ? doc.sha256 : undefined);
+      if(session.folder&&session.folder!==set?.folder)await loadSet(session.folder);
+      else if (set) await loadSet(set.folder, doc?.path, doc && doc.sha256 !== doc.currentSha256 ? doc.sha256 : undefined);
     });
   }, [run, loadSet, rpc, threadId]);
   useRealtime(CHANNEL, value => {

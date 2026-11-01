@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { messageDelivery } from "./message-delivery";
 import type { BbPluginApi } from "@get-bb/plugin-sdk";
 import { exportAnnotations, parseMarkdownToBlocks } from "@plannotator/ui/utils/parser";
 import type { Annotation } from "@plannotator/ui/types";
@@ -9,7 +9,7 @@ import type { SpecSets } from "./spec-sets";
 
 const ordered = (selection: SetFeedback) => [...selection.documents].sort((a, b) => a.id.localeCompare(b.id));
 export function reviewMessages(bb: BbPluginApi, store: ReviewStore, sets: SpecSets) {
-  const inFlight = new Map<string, Promise<{ status: "sent" | "uncertain"; error: string | null }>>();
+  const deliverText = messageDelivery(bb, store);
   async function current(target: ReviewTarget) {
     const saved = store.requireVersion(target);
     const live = await readDocument(bb, target.threadId, saved.source.path);
@@ -51,32 +51,7 @@ export function reviewMessages(bb: BbPluginApi, store: ReviewStore, sets: SpecSe
     const { text } = await prepare(target, action, selection);
     const key = selection ? `set:${target.threadId}:${hash(JSON.stringify([selection.folder, ordered(selection)]))}:feedback`
       : `${target.id}:${target.sha256}:${action === "approve" ? "approval" : target.revision}:${action}`;
-    const running = inFlight.get(key); if (running) return running;
-    const task = (async () => {
-      let delivery = store.delivery(key);
-      if (delivery?.status === "sent") return { status: "sent" as const, error: null };
-      if (delivery?.status === "uncertain") {
-        const history = await bb.sdk.threads.promptHistory({ threadId: target.threadId });
-        if (JSON.stringify(history).includes(delivery.id)) {
-          store.putDelivery(key, { ...delivery, status: "sent", error: null });
-          return { status: "sent" as const, error: null };
-        }
-        if (!resend) return { status: "uncertain" as const, error: "Delivery could not be confirmed. Check the conversation before choosing Resend." };
-      }
-      delivery ??= { id: randomUUID(), threadId: target.threadId, text, status: "pending", error: null };
-      store.putDelivery(key, { ...delivery, status: "uncertain" });
-      if (action === "approve") store.reviewed(target, true);
-      try {
-        await bb.sdk.threads.send({ threadId: target.threadId, mode: "queue-if-active", input: [{ type: "text", text: `${delivery.text}\n\n[Plannotator review ${delivery.id}]`, mentions: [] }] });
-        store.putDelivery(key, { ...delivery, status: "sent", error: null });
-        return { status: "sent" as const, error: null };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        store.putDelivery(key, { ...delivery, status: "uncertain", error: message });
-        return { status: "uncertain" as const, error: `Review saved; delivery is uncertain: ${message}` };
-      }
-    })().finally(() => inFlight.delete(key));
-    inFlight.set(key, task); return task;
+    return deliverText(key, target.threadId, text, resend, action === "approve" ? () => store.reviewed(target, true) : undefined);
   }
   return { current, prepare, deliver };
 }

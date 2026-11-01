@@ -34,6 +34,7 @@ This file is a map. The full guidance lives in focused guides under [`docs/agent
 - [`guides-and-shared-ui.md`](docs/agent-guides/guides-and-shared-ui.md): portable Guided Reviews, data types, parser, annotation system, question blocks, WebMCP, shortcuts, sharing, settings, syntax highlighting.
 
 - [`bb-plugin.md`](docs/agent-guides/bb-plugin.md): native BB document review, integration boundary, and implementation progress.
+- [`bb-factory.md`](docs/agent-guides/bb-factory.md): Beads-backed planning, context packs, execution policy, and implementation progress.
 
 ## Where new docs go
 

@@ -4,7 +4,7 @@ import { buildDiffFileTree, type DiffFileTreeNode } from "@plannotator/ui/utils/
 import { needsReview, type SpecSet, type SetFile } from "./contracts";
 
 const labels: Record<SetFile["status"], string> = {
-  unreviewed: "Needs review", changed: "Changed", reviewed: "Reviewed", approved: "Approved", unavailable: "Unavailable",
+  unreviewed: "Needs review", changed: "Changed", reviewed: "Reviewed", approved: "Approved", unavailable: "Unavailable", reference: "Reference",
 };
 const pendingLabel = (count: number) => `${count} ${count === 1 ? "needs" : "need"} review`;
 type TreeEntry = { path: string; fullPath: string; kind: "file" | "directory"; review?: SetFile };

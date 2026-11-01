@@ -33,7 +33,7 @@ export const reviewStatus = (baseline: string | null, current: string, approvedA
   baseline === null ? "unreviewed" as const : baseline !== current ? "changed" as const : approvedAt ? "approved" as const : "reviewed" as const;
 export const setFileSchema = z.object({
   path: z.string(), id: sha.nullable(), sha256: sha.nullable(), revision: z.number().int().nullable(),
-  status: z.enum(["unreviewed", "changed", "reviewed", "approved", "unavailable"]), commentCount: z.number().int(), error: z.string().nullable(),
+  status: z.enum(["unreviewed", "changed", "reviewed", "approved", "unavailable", "reference"]), commentCount: z.number().int(), error: z.string().nullable(),
 });
 export const specSchema = z.object({ folder: z.string(), parent: z.string().nullable(), name: z.string() });
 export type Spec = z.infer<typeof specSchema>;
@@ -44,7 +44,7 @@ export const specSetSchema = z.object({
 });
 export type SpecSet = z.infer<typeof specSetSchema>;
 export type SetFile = z.infer<typeof setFileSchema>;
-export const needsReview = (file: SetFile) => file.status !== "reviewed" && file.status !== "approved";
+export const needsReview = (file: SetFile) => file.status !== "reviewed" && file.status !== "approved" && file.status !== "reference";
 export const setFeedbackSchema = z.object({ folder: folderPath, documents: z.array(target).min(1).max(200) }).strict();
 export type SetFeedback = z.infer<typeof setFeedbackSchema>;
 export function feedbackSelection(set: SpecSet): SetFeedback {
@@ -65,5 +65,5 @@ export const rpcContract = defineRpcContract({
   save: { input: target.extend({ annotations: annotationsSchema }), output: z.object({ revision: z.number().int() }) },
   prepare: { input: target.extend({ action, set: setFeedbackSchema.optional() }), output: z.object({ text: z.string() }) },
   send: { input: target.extend({ action, set: setFeedbackSchema.optional(), resend: z.boolean().optional() }), output: z.object({ status: z.enum(["sent", "uncertain"]), error: z.string().nullable() }) },
-  reviewed: { input: target, output: z.object({ ok: z.literal(true) }) },
+  reviewed: { input: target.extend({specFolder:folderPath.optional()}), output: z.object({ ok: z.literal(true) }) },
 });

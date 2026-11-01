@@ -1,3 +1,4 @@
+import {factoryContract} from "../factory/contracts";
 // @vitest-environment jsdom
 import React from "react";
 import { cleanup, fireEvent, waitFor } from "@testing-library/react";
@@ -9,6 +10,7 @@ import { CHANNEL, rpcContract, documentSchema, annotationsSchema, summarizeDocum
 
 vi.mock("@plannotator/ui/components/Viewer", () => ({ Viewer: ({ markdown, documentChanges, onAddAnnotation }: { markdown: string; documentChanges?: { type: string }[]; onAddAnnotation: (value: unknown) => void }) => <div data-testid="document-viewer" data-changes={documentChanges?.map(block => block.type).join(",")}>{markdown}<button onClick={() => onAddAnnotation({ id: "note-1", blockId: "block-1", startOffset: 0, endOffset: 0, type: AnnotationType.GLOBAL_COMMENT, originalText: "", text: "Clarify acceptance criteria", createdA: 1, images: undefined, mentions: undefined })}>Add test comment</button></div> }));
 vi.mock("@plannotator/ui/components/AnnotationPanel", () => ({ AnnotationPanel: () => null }));
+const panelContract={...rpcContract,factoryStatus:factoryContract.factoryStatus};
 const app = await loadPluginApp(() => import("../app"));
 afterEach(cleanup);
 function mount(composerThread = "thread-1", baseline: string | null = null, nested = false) {
@@ -23,10 +25,11 @@ function mount(composerThread = "thread-1", baseline: string | null = null, nest
   const prepare = vi.fn(({ id, revision }: { id: string; revision: number }) => { expect(revision).toBe(find(id).revision); return { text: "Generated document feedback" }; });
   const send = vi.fn(() => ({ status: "sent" as const, error: null }));
   const open = vi.fn(({ path }: { path: string }) => { selectedPath = path; return path === "requirements.md" ? document : other; });
-  const slot = renderSlot<ExperimentalThreadActionTabProps, typeof rpcContract>(app.tabs[0]! as { component: React.ComponentType<ExperimentalThreadActionTabProps> }, { threadId: "thread-1", environment: { id: "environment-1" }, params: null }, {
-    experimental_rpcContract: rpcContract, pluginId: "plannotator", context: { threadId: "thread-1" },
+  const slot = renderSlot<ExperimentalThreadActionTabProps, typeof panelContract>(app.tabs[0]! as { component: React.ComponentType<ExperimentalThreadActionTabProps> }, { threadId: "thread-1", environment: { id: "environment-1" }, params: null }, {
+    experimental_rpcContract: panelContract, pluginId: "plannotator", context: { threadId: "thread-1" },
     composer: { text: "Existing prompt", attachmentCount: 2, scope: { kind: "thread", threadId: composerThread } },
     rpc: {
+      factoryStatus:()=>({configured:false,error:null,spec:null,state:null,suggestedPhase:"requirements",files:[],treeStatuses:{},tasks:[],runs:[]}),
       session: () => ({ folder: ".", path: "requirements.md", specs: [{ folder: ".", parent: null, name: "Framework" }, ...(nested ? [{ folder: "nested", parent: ".", name: "nested" }] : [])], truncated: false }), open,
       specSet: ({ folder }: { folder: string }) => {
         const files = [summarizeDocument(document), ...(nested ? [summarizeDocument(other)] : [])].filter(file => insideFolder(file.path, folder));

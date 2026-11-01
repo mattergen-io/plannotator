@@ -1,3 +1,5 @@
+import type {FactoryView} from "./factory/contracts";
+import { FactoryControls } from "./factory/controls";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useComposer } from "@get-bb/plugin-sdk/app";
 import { Viewer, type ViewerHandle } from "@plannotator/ui/components/Viewer";
@@ -22,6 +24,8 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   const [portal, setPortal] = useState<HTMLElement | null>(null);
   const [uncertain, setUncertain] = useState<"feedback" | "approve" | null>(null);
   const viewer = useRef<ViewerHandle>(null);
+  const [factoryInitialized,setFactoryInitialized]=useState(false);
+  const [factoryView,setFactoryView]=useState<FactoryView|null>(null);
   const doc = review.document;
   const blocks = useMemo(() => parseMarkdownToBlocks(doc?.content ?? ""), [doc?.content]);
   const diff = useMemo(() => doc?.baseline !== null && doc?.baseline !== undefined ? computeDocumentChanges(doc.baseline, doc.content) : null, [doc?.baseline, doc?.content]);
@@ -76,9 +80,10 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
       <aside className="bb-review-navigation">
         <SpecSelector specs={review.specs} selected={review.specSet?.folder ?? null} busy={review.busy} truncated={review.truncated}
           onSelect={folder => void review.run(() => review.loadSet(folder))} onRefresh={review.refresh} />
-        {review.specSet && <SpecTree specSet={review.specSet} selectedPath={doc?.path ?? null} busy={review.busy} onSelect={path => void review.run(() => review.load(path))} />}
+        {review.specSet && <SpecTree specSet={{...review.specSet,files:review.specSet.files.map(file=>({...file,...(factoryView?.treeStatuses[file.path]?{status:factoryView.treeStatuses[file.path]}:{})}))}} selectedPath={doc?.path ?? null} busy={review.busy} onSelect={path => void review.run(() => review.load(path))} />}
       </aside>
       <main className="bb-review-main">
+        <FactoryControls threadId={threadId} folder={review.specSet?.folder??null} environmentId={review.specSet?.environmentId} flush={review.flush} onInitialized={setFactoryInitialized} onView={setFactoryView} onRefresh={review.refresh}/>
     {review.error && <div role="alert" className="bb-review-error">{review.error}
       {review.dirty && doc && <button disabled={review.busy} onClick={() => void review.run(() => review.load(doc.path, doc.sha256, true))}>Discard local edits and reload saved feedback</button>}
     </div>}
@@ -94,14 +99,13 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
         <button onClick={() => send("feedback")} disabled={review.busy || !feedbackCount || historical}>Send feedback</button>
         <button title="Mark only the displayed document as reviewed" disabled={review.busy || historical} onClick={() => void review.run(async () => {
           await review.flush(); const current = review.current.current; if (!current) return;
-          await review.rpc.call("reviewed", targetOf(current)); await review.load(current.path); review.setNotice("Reviewed baseline updated.");
+          await review.rpc.call("reviewed", { ...targetOf(current),...(factoryInitialized&&review.specSet?{specFolder:review.specSet.folder}:{}) }); await review.load(current.path); review.setNotice("Reviewed baseline updated.");
         })}>Reviewed</button>
-        <button title="Approve only the displayed document" className="bb-review-approve" onClick={() => send("approve")} disabled={review.busy || historical}>Approve</button>
         <button aria-expanded={notesOpen} onClick={() => setNotesOpen(!notesOpen)}>Comments ({annotations.length})</button>
       </div>
           {review.dirty && <span role="status" className="bb-review-saving">Saving feedback…</span>}
         </div>
-        <div className="bb-review-scope"><span>Feedback includes comments across this set. Reviewed and Approve apply to this document.</span>
+        <div className="bb-review-scope"><span>Feedback includes comments across this set. Reviewed checks off this document; Accept advances the spec phase.</span>
           {diff && <span className="bb-review-change-legend">{diff.stats.additions || diff.stats.deletions ? <>Changes since review: <span>added</span> · <span>edited</span></> : "No changes since review."}</span>}
         </div>
       </header>

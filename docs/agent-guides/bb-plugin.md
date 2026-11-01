@@ -1,6 +1,6 @@
 # Native BB document review
 
-Status: **first milestone complete**, installed locally on BB 0.48.1 / SDK 0.6.104.
+Status: **native review milestone complete**. The phase-aware Beads factory extends this milestone; see [BB factory](bb-factory.md) for current workflow and verification. Installed locally on BB 0.48.1 / SDK 0.6.104.
 
 The independently maintained mattergen-io fork owns this integration. Routine upstream synchronization is not part of development. BB owns projects, environments, threads, agents, and file access; the plugin owns document review and feedback.
 
@@ -42,14 +42,14 @@ The independently maintained mattergen-io fork owns this integration. Routine up
 
 ## Behavior
 
-Open the thread’s **Plannotator** panel and choose a spec in the left **Spec sets** tree. A spec is a folder containing its own `requirements.md`. Each spec nests under its nearest ancestor that also has that file. Other ancestors are omitted from this selector: Graze’s README-only `blocks` folder is skipped, putting blocks 01–04 directly under `graze-framework`, with A1–A4 under 01. Discovery scans the thread’s checkout, including hidden spec folders.
+Open the thread’s **Plannotator** panel and choose a spec in the left **Spec sets** tree. A spec is a folder containing its own Markdown file with `requirements` in its filename. Each spec nests under its nearest ancestor that also has that file. Other ancestors are omitted from this selector: Graze’s README-only `blocks` folder is skipped, putting blocks 01–04 directly under `graze-framework`, with A1–A4 under 01. Discovery scans the thread’s checkout, including hidden spec folders.
 
 Below the selector, the left document tree shows every directory and file under the selected spec as its base, preserving the actual filesystem hierarchy and empty folders. Markdown documents open in the single review viewer on the right; other files open through BB’s native preview. Changing the selected spec changes this base. The chosen spec and last open document are remembered per thread. The native Markdown opener chooses the nearest discovered owning spec; a standalone Markdown file can still open in its containing folder.
 The tree marks never-reviewed files **Needs review**, revised files **Changed**, and exact versions **Reviewed** or **Approved**. Folder rows retain pending counts when collapsed. Comments have a separate count. Select a file to review it in the single document viewer, using text selection, global comments, or suggested deletions.
 
 **Add to chat** appends one combined prompt for current-version comments across the selected set, preserving the native composer’s draft and attachments. **Send feedback** queues that prompt to the same thread. Historical-version comments remain in each document’s version history and are excluded from the current combined prompt. Before preparing/sending, the backend rechecks folder membership, file contents, source identity, and saved feedback revisions; a stale set requires refresh. An unavailable document prevents an incomplete combined message.
 
-**Reviewed** applies only to the displayed document and resets the comparison baseline without sending a message. **Approve** records the displayed content hash, resets the baseline, and sends an acknowledgment-and-wait instruction. Approval does not authorize implementation or another stage. The backend rechecks the live file, checkout identity, and feedback revision before sending.
+**Reviewed** applies only to the displayed document and resets the comparison baseline without sending a message. The first-milestone **Approve** API (retained for existing clients; removed from the current UI) records the displayed content hash, resets the baseline, and sends an acknowledgment-and-wait instruction. Approval does not authorize implementation or another stage. The backend rechecks the live file, checkout identity, and feedback revision before sending.
 
 Comments are stored per thread, checkout identity, file, and content hash in the plugin’s SQLite database. Edits produce a new review version; previous comments remain available in the version selector. Earlier versions are read-only. Concurrent feedback saves reject stale revisions; the user can explicitly discard local edits and reload the saved review. Ambiguous sends retain their operation marker and reconcile against prompt history before another send.
 
@@ -76,10 +76,16 @@ Plannotator CSS is generated from the fork, then scoped to the plugin’s docume
 
 Reproducible commands and recorded outcomes: [verification.json](../../apps/bb-plugin-plannotator/evidence/verification.json). Actual generated messages: [generated-messages.json](../../apps/bb-plugin-plannotator/evidence/generated-messages.json). Current native panel: [requirements-based spec navigation](../../apps/bb-plugin-plannotator/assets/native-spec-navigation.jpg). Compact review header: [wide](../../apps/bb-plugin-plannotator/assets/native-compact-review-wide.jpg) and [narrow](../../apps/bb-plugin-plannotator/assets/native-compact-review-narrow.jpg). Earlier selector and highlighting captures remain in the evidence history.
 
-Successful live agent-message delivery was not exercised; that contract and automatic refresh were verified through the SDK harness.
+The initial review milestone used the SDK harness for live-message delivery; the factory extension now exercises actual phase-message delivery and agent replies in its disposable acceptance project.
 
 ## First-milestone limits
 
 A spec set supports up to 200 UTF-8 `.md` / `.markdown` documents, each up to 256 KiB. Annotations are limited to 128 KiB per version and a combined feedback prompt to 128 KiB. Incomplete inventories are rejected instead of silently dropping documents. The version selector lists the 30 most recently updated snapshots; older rows remain stored. Image attachment/upload support and workspace-relative image routing are not implemented. File changes are refreshed after agent replies or manually, rather than watched continuously. A checkout change opens a separate review identity; carrying spec folders is not included.
 
-This is a local development installation. Git/npm release packaging and factory orchestration are later work.
+This is a local development installation. Git/npm release packaging remains separate. Factory orchestration is implemented in the [BB factory extension](bb-factory.md).
+
+
+## Factory development
+
+The phase-aware spec and Beads factory work is tracked in
+[the factory implementation plan](bb-factory.md).

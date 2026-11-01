@@ -66,3 +66,21 @@
 .bb-plannotator-panel .bb-review-document [data-viewer-document-header] { top:0; margin-bottom:8px; }
 .bb-plannotator-panel .bb-review-document [data-viewer-annotation-controls], .bb-plannotator-panel .bb-review-document [data-sticky-actions] { padding-block:4px; }
 .bb-plannotator-panel .bb-review-document [data-viewer-document-header] + [data-block-id] { margin-top:8px; }
+.bb-plannotator-panel .bb-factory { flex:0 0 auto; border-bottom:1px solid var(--border); font-size:12px; max-height:55%; overflow:auto; }
+.bb-plannotator-panel .bb-factory-summary { display:flex; align-items:center; flex-wrap:wrap; gap:5px; padding:5px 8px; }
+.bb-plannotator-panel .bb-factory-summary > span { color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-factory-details { padding:4px 10px 12px; }
+.bb-plannotator-panel .bb-factory-details label { display:flex; gap:6px; align-items:center; margin:7px 0; }
+.bb-plannotator-panel .bb-factory-details input:not([type=checkbox]), .bb-plannotator-panel .bb-factory-details textarea { min-width:0; flex:1; border:1px solid var(--border); border-radius:4px; padding:5px; background:var(--background); color:var(--foreground); font:inherit; }
+.bb-plannotator-panel .bb-factory-details textarea { min-height:70px; }
+.bb-plannotator-panel .bb-factory-details details { margin-top:7px; }
+.bb-plannotator-panel .bb-factory-details summary { cursor:pointer; padding:4px 0; }
+.bb-plannotator-panel .bb-factory-members, .bb-plannotator-panel .bb-factory-tasks { margin:3px 0; padding-left:14px; }
+.bb-plannotator-panel .bb-factory-members li { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:3px 0; }
+.bb-plannotator-panel .bb-factory-meta, .bb-plannotator-panel .bb-factory-details small { color:var(--muted-foreground); overflow-wrap:anywhere; }
+.bb-plannotator-panel .bb-factory-models { display:flex; flex-wrap:wrap; gap:8px 24px; }
+.bb-plannotator-panel .bb-factory-details pre { max-height:220px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; padding:8px; background:var(--muted); font-size:11px; }
+.bb-plannotator-panel .bb-factory-tasks > li { padding:7px 0; border-bottom:1px solid var(--border); }
+.bb-plannotator-panel .bb-factory-tasks > li > small { display:block; }
+.bb-plannotator-panel .bb-factory-error { padding:4px 8px; color:#e59b91; }
+.bb-plannotator-panel .bb-factory-run { padding:8px 0; overflow-wrap:anywhere; }

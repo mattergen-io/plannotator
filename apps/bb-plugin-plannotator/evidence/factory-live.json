@@ -1,0 +1,169 @@
+{
+  "projectId": "proj_6ea7sdxqsx",
+  "plannerId": "thr_jubxaf3ew4",
+  "root": "/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6",
+  "runId": "bf-77c165ddcb1b7005976d",
+  "stage": "complete",
+  "branch": "factory/bf-77c165ddcb1b7005976d",
+  "integration": "/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/integration",
+  "startingHead": "939ecf3a552ced0fa0bb74389b45e49be7b9d6a0",
+  "factoryHead": "eeb87bf9e48d4952a81c6bbe8c2ea013ba2b1ab2",
+  "startingBranchUnchanged": true,
+  "protectedFilesUnchanged": true,
+  "bothWorkspacesClean": true,
+  "independentApiCheck": "35 independent API assertions passed",
+  "testOutput": "\u2714 adds zero, negative, and decimal operands (0.535972ms)\n\u2714 baseline remains valid (0.523567ms)\n\u2714 dispatches addition with zero, negative, and decimal operands (0.57643ms)\n\u2714 dispatches subtraction with zero, negative, and decimal operands (0.11835ms)\n\u2714 rejects unsupported operations (0.716202ms)\n\u2714 subtracts zero, negative, and decimal operands in order (0.541292ms)\n\u2139 tests 6\n\u2139 suites 0\n\u2139 pass 6\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 58.306092\n",
+  "preStartReady": [],
+  "worker": {
+    "model": "gpt-6.1-terra",
+    "providerId": "codex",
+    "reasoningLevel": "medium"
+  },
+  "reviewer": {
+    "model": "gpt-6.1-sol",
+    "providerId": "codex",
+    "reasoningLevel": "xhigh"
+  },
+  "tasks": [
+    {
+      "beadId": "bf-39fafdfde565b546731c",
+      "key": "T3",
+      "status": "closed",
+      "stage": "done",
+      "attempts": 0,
+      "dependencies": [
+        "bf-01d753f7eafe26e9596a",
+        "bf-a074e3e29e3d31815476"
+      ],
+      "base": "22236ce10e65c6e1ee85cf78dc3b5d4d5034ac82",
+      "commit": "7c39fe39fbc396855ab2dc9f18daef56238fd302",
+      "changedFiles": [
+        "calculate.test.mjs",
+        "src/calculate.mjs"
+      ],
+      "workerId": "thr_3s5x57q478",
+      "reviewerId": "thr_9j2wvb78e8",
+      "packHash": "8a39aa8b9a9598729fbafb49ac0de1a8e1c40b981365449b1e979ef25d2e3fca",
+      "checkFailures": []
+    },
+    {
+      "beadId": "bf-a074e3e29e3d31815476",
+      "key": "T2",
+      "status": "closed",
+      "stage": "done",
+      "attempts": 0,
+      "dependencies": [],
+      "base": "939ecf3a552ced0fa0bb74389b45e49be7b9d6a0",
+      "commit": "52aabd9f911996630093a9535852d7654f9aac2d",
+      "changedFiles": [
+        "src/subtract.mjs",
+        "subtract.test.mjs"
+      ],
+      "workerId": "thr_wk59nnqens",
+      "reviewerId": "thr_v4n94ncrmz",
+      "packHash": "3f31bf667921521b137d87ec0bbfcd8bbb251a9e50141f4dc1a392797315a39d",
+      "checkFailures": []
+    },
+    {
+      "beadId": "bf-01d753f7eafe26e9596a",
+      "key": "T1",
+      "status": "closed",
+      "stage": "done",
+      "attempts": 1,
+      "dependencies": [],
+      "base": "939ecf3a552ced0fa0bb74389b45e49be7b9d6a0",
+      "commit": "5e9f058da88cc83adff6780a71f20029cbd53fbc",
+      "changedFiles": [
+        "add.test.mjs",
+        "src/add.mjs"
+      ],
+      "workerId": "thr_pphtyrc9pc",
+      "reviewerId": "thr_7kdv4jy69t",
+      "packHash": "360d3712bcb0099c173c7ca878f44d210d023f147855a5a8f928a9b68316295d",
+      "checkFailures": [
+        "node /home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-control-nhrhsy3j/verify.mjs\nExit 1\n\nControlled one-time acceptance-test verification failure; rerun verification.\n",
+        "node /home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-control-nhrhsy3j/verify.mjs\nExit 1\n\nControlled one-time acceptance-test verification failure; rerun verification.\n"
+      ]
+    }
+  ],
+  "threadExecutionEvidence": [
+    {
+      "threadId": "thr_3s5x57q478",
+      "role": "worker",
+      "eventSequence": 1,
+      "createdAt": 1793514916234,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-terra",
+        "reasoningLevel": "medium"
+      },
+      "finalOutput": "Implemented operation dispatch in [src/calculate.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-39fafdfde565b546731c/src/calculate.mjs:1) and added focused coverage in [calculate.test.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-39fafdfde565b546731c/calculate.test.mjs:1).\n\nVerification passed: `node --test calculate.test.mjs` (3 tests), `node --test` (6 tests), and the requested factory `verify.mjs` check. `git diff -- baseline.test.mjs guard.txt` produced no output.",
+      "threadProviderId": "codex"
+    },
+    {
+      "threadId": "thr_9j2wvb78e8",
+      "role": "reviewer",
+      "eventSequence": 1,
+      "createdAt": 1793514939839,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-sol",
+        "reasoningLevel": "xhigh"
+      },
+      "finalOutput": "No blocking findings.\n\nThe implementation exports synchronous `calculate(operation, a, b)`, imports both prerequisite APIs, dispatches using exact string comparisons, and throws `Error` for unsupported operations without duplicating arithmetic. See [src/calculate.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-39fafdfde565b546731c/src/calculate.mjs:1).\n\nThe focused tests cover both operations with zero, negative, and decimal operands, preserve native floating-point behavior, and verify rejection of uppercase `'ADD'`. See [calculate.test.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-39fafdfde565b546731c/calculate.test.mjs:5).\n\nIndependent verification passed:\n\n- `node --test calculate.test.mjs`: 3/3 tests.\n- `node --test`: 6/6 tests.\n- `git diff --check 22236ce10e65c6e1ee85cf78dc3b5d4d5034ac82...7c39fe39fbc396855ab2dc9f18daef56238fd302`: clean.\n- `git diff --exit-code 22236ce10e65c6e1ee85cf78dc3b5d4d5034ac82...7c39fe39fbc396855ab2dc9f18daef56238fd302 -- baseline.test.mjs guard.txt`: empty.\n- `git status --short`: empty.\n\nFACTORY_REVIEW: PASS",
+      "threadProviderId": "codex"
+    },
+    {
+      "threadId": "thr_wk59nnqens",
+      "role": "worker",
+      "eventSequence": 1,
+      "createdAt": 1793514816210,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-terra",
+        "reasoningLevel": "medium"
+      },
+      "finalOutput": "Implemented the named `subtract(a, b)` export in [src/subtract.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-a074e3e29e3d31815476/src/subtract.mjs:1), with focused coverage in [subtract.test.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-a074e3e29e3d31815476/subtract.test.mjs:5).\n\nVerification passed: `node --test subtract.test.mjs` (1 test), `node --test` (2 tests), and the requested factory `verify.mjs` check. `git diff -- baseline.test.mjs guard.txt` produced no output.",
+      "threadProviderId": "codex"
+    },
+    {
+      "threadId": "thr_v4n94ncrmz",
+      "role": "reviewer",
+      "eventSequence": 1,
+      "createdAt": 1793514852289,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-sol",
+        "reasoningLevel": "xhigh"
+      },
+      "finalOutput": "No blocking findings.\n\nThe synchronous named export in [src/subtract.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-a074e3e29e3d31815476/src/subtract.mjs:1) returns exactly `a - b`. The focused tests in [subtract.test.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-a074e3e29e3d31815476/subtract.test.mjs:5) cover zero in either operand position, negative operands, operand order, and decimals, including native floating-point behavior.\n\nIndependent verification:\n\n- `node --test subtract.test.mjs` \u2014 passed, 1 test.\n- `node --test` \u2014 passed, 2 tests, consistent with the supplied factory evidence.\n- `git diff --name-status 939ecf3...52aabd9` \u2014 only the two assigned files changed.\n- `git diff --exit-code 939ecf3...52aabd9 -- baseline.test.mjs guard.txt` and `git diff --exit-code -- baseline.test.mjs guard.txt` \u2014 both empty, exit 0.\n- `git status --porcelain=v1` \u2014 empty.\n\nFACTORY_REVIEW: PASS",
+      "threadProviderId": "codex"
+    },
+    {
+      "threadId": "thr_pphtyrc9pc",
+      "role": "worker",
+      "eventSequence": 1,
+      "createdAt": 1793514856078,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-terra",
+        "reasoningLevel": "medium"
+      },
+      "finalOutput": "The addition task is complete. [src/add.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-01d753f7eafe26e9596a/src/add.mjs:1) exports synchronous `add(a, b)`, and [add.test.mjs](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-01d753f7eafe26e9596a/add.test.mjs:1) covers zero, negative, and decimal operands.\n\nVerification passed:\n\n- `node --test add.test.mjs`: 1 test passed.\n- `node --test`: 2 tests passed.\n- `node /home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-control-nhrhsy3j/verify.mjs`: exit 0, 2 tests passed.\n- `git diff -- baseline.test.mjs guard.txt`: no output.",
+      "threadProviderId": "codex"
+    },
+    {
+      "threadId": "thr_7kdv4jy69t",
+      "role": "reviewer",
+      "eventSequence": 1,
+      "createdAt": 1793514872661,
+      "execution": {
+        "providerId": null,
+        "model": "gpt-6.1-sol",
+        "reasoningLevel": "xhigh"
+      },
+      "finalOutput": "No actionable findings. The task meets the accepted T1 responsibilities and acceptance criteria.\n\n- [src/add.mjs:1](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-01d753f7eafe26e9596a/src/add.mjs:1) exports synchronous named function `add(a, b)` and returns native JavaScript `a + b`.\n- [add.test.mjs:5](/home/hendrix/.bb/thread-storage/thr_kb7ffg7dw8/factory-acceptance-7uhrltk6.factory/bf-77c165ddcb1b7005976d/bf-01d753f7eafe26e9596a/add.test.mjs:5) covers zero, negative, and decimal operands. The decimal assertion compares against native JavaScript arithmetic, preserving floating-point behavior.\n\nIndependent verification passed:\n\n- `node --test add.test.mjs`: 1 test passed.\n- `node --test`: 2 tests passed.\n- `git diff --check 939ecf3a552ced0fa0bb74389b45e49be7b9d6a0...5e9f058da88cc83adff6780a71f20029cbd53fbc`: no output.\n- `git diff --name-only 939ecf3a552ced0fa0bb74389b45e49be7b9d6a0...5e9f058da88cc83adff6780a71f20029cbd53fbc`: only `src/add.mjs` and `add.test.mjs`, confirming the changes stay within T1\u2019s scope.\n- `git diff -- baseline.test.mjs guard.txt`: no output.\n\nFACTORY_REVIEW: PASS",
+      "threadProviderId": "codex"
+    }
+  ]
+}

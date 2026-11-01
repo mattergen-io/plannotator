@@ -1,0 +1,80 @@
+{
+  "capturedAt": "2026-11-01T06:57:09.550841+00:00",
+  "checks": [
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator test",
+      "result": "$ vitest run\n\n RUN  v4.1.12 /home/hendrix/Projects/plannotator/apps/bb-plugin-plannotator\n\n\n Test Files  10 passed (10)\n      Tests  50 passed (50)\n   Start at  01:49:30\n   Duration  100.34s (transform 1.14s, setup 0ms, import 2.75s, tests 166.78s, environment 1.31s)",
+      "exitCode": 0
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator test -- tests/factory.test.ts tests/factory-planning.test.ts",
+      "result": "$ vitest run tests/factory.test.ts tests/factory-planning.test.ts\n\n RUN  v4.1.12 /home/hendrix/Projects/plannotator/apps/bb-plugin-plannotator\n\n\n Test Files  2 passed (2)\n      Tests  8 passed (8)\n   Start at  01:52:52\n   Duration  41.95s (transform 131ms, setup 0ms, import 302ms, tests 63.37s, environment 0ms)",
+      "exitCode": 0
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator test -- tests/factory-recovery.test.ts -t \"rejects task-worktree\"",
+      "result": "$ vitest run tests/factory-recovery.test.ts -t \"rejects task-worktree\"\n\n RUN  v4.1.12 /home/hendrix/Projects/plannotator/apps/bb-plugin-plannotator\n\n\n Test Files  1 passed (1)\n      Tests  1 passed | 3 skipped (4)\n   Start at  01:56:08\n   Duration  20.42s (transform 88ms, setup 0ms, import 185ms, tests 20.15s, environment 0ms)",
+      "exitCode": 0
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator typecheck",
+      "result": "tsc --noEmit passed",
+      "exitCode": 0
+    },
+    {
+      "command": "bun test tests/agents-md-size.test.ts",
+      "result": "3 passed, 0 failed",
+      "exitCode": 0
+    },
+    {
+      "command": "bun run --cwd apps/bb-plugin-plannotator build",
+      "result": "app, server and host bundles built",
+      "exitCode": 0
+    },
+    {
+      "command": "bb plugin reload plannotator --json",
+      "result": {
+        "ok": true
+      },
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "result": "No whitespace errors",
+      "exitCode": 0
+    }
+  ],
+  "runtime": {
+    "bb": "0.48.1",
+    "beads": "1.3.0",
+    "sdk": "0.6.104"
+  },
+  "buildHashes": {
+    "dist/server.js": "1237d1b9731481129d04b9810843de77d05efb85283080ff7943e5c173d3b172",
+    "dist/app.js": "0cb11563ca8cf8b23e082c2aedf71d5215be09cd7ca23f842dfe282dd33791e7",
+    "dist/host.js": "33f8754fa0e3ec8c7faab50c79d11d0503b6fd79b72e44fa551f8f59d9ba545e"
+  },
+  "nativeUi": {
+    "wide": {
+      "viewportWidth": 2200,
+      "panelWidth": 1880,
+      "factoryClientWidth": 1625,
+      "factoryScrollWidth": 1625
+    },
+    "narrow": {
+      "viewportWidth": 1050,
+      "panelWidth": 730,
+      "panelScrollWidth": 730,
+      "factoryClientWidth": 501,
+      "factoryScrollWidth": 501
+    },
+    "evidenceDisplaysPassAndChecks": true,
+    "openReviewerNavigatedTo": "thr_9j2wvb78e8",
+    "captures": [
+      "assets/native-factory-complete-wide.jpg",
+      "assets/native-factory-complete-narrow.jpg"
+    ]
+  },
+  "liveResult": "factory-live.json",
+  "liveReproduction": "python3 apps/bb-plugin-plannotator/evidence/verify-factory-live.py apps/bb-plugin-plannotator/evidence/factory-fixture.json"
+}

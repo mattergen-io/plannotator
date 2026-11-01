@@ -7,13 +7,13 @@ import type { ReviewStore } from "./review-store";
 export function specSets(bb: BbPluginApi, store: ReviewStore) {
   async function session(threadId: string) {
     const source = await workspace(bb, threadId);
-    const result = await bb.sdk.files.listPaths({ hostId: source.hostId, path: source.checkoutRoot, query: "requirements.md",
+    const result = await bb.sdk.files.listPaths({ hostId: source.hostId, path: source.checkoutRoot, query: "requirements",
       includeFiles: true, includeDirectories: false, includeHidden: true, excludeNames: [".git", "node_modules"], limit: 5000 });
     const folders = new Set<string>();
     for (const entry of result.paths) {
       if (entry.kind !== "file") continue;
       const parsed = documentPath.safeParse(entry.path.replace(/\\/g, "/"));
-      if (parsed.success && parsed.data.split("/").at(-1)?.toLowerCase() === "requirements.md") folders.add(parentFolder(parsed.data));
+      if (parsed.success && /requirements/i.test(parsed.data.split("/").at(-1) ?? "")) folders.add(parentFolder(parsed.data));
     }
     const specs: Spec[] = [...folders].sort().map(folder => ({ folder,
       name: folder === "." ? source.paths.basename(source.checkoutRoot) : folder.split("/").at(-1)!,
