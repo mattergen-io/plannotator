@@ -125,3 +125,6 @@ test-results/
 
 # Native BB plugin generated Mermaid sandbox
 /apps/bb-plugin-plannotator/mermaid-sandbox.generated.txt
+
+# Native BB isolated review prototype
+/apps/bb-plugin-plannotator/isolated-app.generated.txt

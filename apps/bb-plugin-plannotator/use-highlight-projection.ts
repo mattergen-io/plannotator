@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { addedTextRanges, type HighlightInput, type TextRange } from "@plannotator/ui/hooks/useDocumentChanges";
-import source from "./document-worker.generated.txt" with { type: "text" };
+import source from "./document-worker.generated.txt?raw" with { type: "text" };
 import type { DocumentWorkerResult } from "./document-worker";
 
 export function useHighlightProjection() {

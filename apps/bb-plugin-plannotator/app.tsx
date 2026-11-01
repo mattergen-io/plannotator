@@ -4,6 +4,7 @@ import { setClipboardWriter } from "@plannotator/ui/utils/clipboard";
 import { setMermaidRenderOverride } from "@plannotator/ui/utils/diagram-render";
 import { renderMermaidInSandbox } from "./mermaid-sandbox";
 import { DocumentPanel } from "./document-panel";
+import { BrowserComposerBridge } from "./browser-composer-bridge";
 import { TAB } from "./contracts";
 import "./document-styles.css";
 import "./panel.css";
@@ -31,5 +32,6 @@ function ReviewFile({ path, source, Original }: PluginFileOpenerProps) {
 }
 export default definePluginApp(app => {
   app.slots.experimental_tab({ ...TAB, title: "Plannotator", icon: "ClipboardCheck", layout: "flush", component: ReviewTab });
+  app.slots.experimental_browserToolbarAction({ id: "isolated-review-bridge", title: "Plannotator bridge", component: BrowserComposerBridge });
   app.slots.fileOpener({ id: "markdown-review", title: "Plannotator", extensions: ["md", "markdown"], component: ReviewFile });
 });

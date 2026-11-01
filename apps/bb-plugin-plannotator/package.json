@@ -22,11 +22,12 @@
   "scripts": {
     "typecheck": "bun run build:assets && tsc --noEmit",
     "test": "bun run build:assets && vitest run",
-    "build": "bun run build:styles && bun run build:assets && bb plugin build",
+    "build": "bun run build:styles && bun run build:assets && bun run build:isolated && bb plugin build",
     "build:styles": "bun run --cwd ../../packages/ui build:css && bun scripts/scope-styles.ts",
     "build:worker": "bun build document-worker.ts --target browser --format iife --minify --outfile document-worker.generated.txt",
     "build:mermaid": "bun build mermaid-sandbox-entry.ts --target browser --format iife --minify --outfile mermaid-sandbox.generated.txt",
-    "build:assets": "bun run build:worker && bun run build:mermaid"
+    "build:assets": "bun run build:worker && bun run build:mermaid",
+    "build:isolated": "../../packages/ui/node_modules/.bin/vite build --config vite.isolated.config.ts"
   },
   "dependencies": {
     "@plannotator/ui": "workspace:*",

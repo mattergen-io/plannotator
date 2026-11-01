@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import source from "./document-worker.generated.txt" with { type: "text" };
+import source from "./document-worker.generated.txt?raw" with { type: "text" };
 import { processDocument, type ProcessedDocument } from "./document-processing";
 import type { DocumentWorkerResult } from "./document-worker";
 

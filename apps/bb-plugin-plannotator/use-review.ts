@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRealtime, useRealtimeConnectionState, useRpc } from "@get-bb/plugin-sdk/app";
+import type { PluginRealtimeConnectionState, PluginRpcClient } from "@get-bb/plugin-sdk/app";
 import type { Annotation } from "@plannotator/ui/types";
-import { CHANNEL, rpcContract, annotationsSchema, targetOf, parentFolder, insideFolder, summarizeDocument, type ReviewDocument, type SpecSet, type Spec } from "./contracts";
+import { rpcContract, annotationsSchema, targetOf, parentFolder, insideFolder, summarizeDocument, type ReviewDocument, type SpecSet, type Spec } from "./contracts";
 
-export function useReview(threadId: string, initialPath?: string) {
-  const rpc = useRpc<typeof rpcContract>();
+export function useReview(threadId: string, initialPath: string | undefined, rpc: PluginRpcClient<typeof rpcContract>, connection: PluginRealtimeConnectionState) {
   const [document, setDocument] = useState<ReviewDocument | null>(null), [specSet, setSpecSet] = useState<SpecSet | null>(null);
   const [specs, setSpecs] = useState<Spec[]>([]), [truncated, setTruncated] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null), [notice, setNotice] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const current = useRef<ReviewDocument | null>(null), currentSet = useRef<SpecSet | null>(null), isDirty = useRef(false), generation = useRef(0);
   const saving = useRef(Promise.resolve());
-  const connection = useRealtimeConnectionState();
   const commitSet = useCallback((set: SpecSet) => { currentSet.current = set; setSpecSet(set); }, []);
   const commit = useCallback((doc: ReviewDocument | null) => {
     current.current = doc; setDocument(doc);
@@ -84,9 +82,6 @@ export function useReview(threadId: string, initialPath?: string) {
       else if (set) await loadSet(set.folder, doc?.path, doc && doc.sha256 !== doc.currentSha256 ? doc.sha256 : undefined);
     });
   }, [run, loadSet, rpc, threadId]);
-  useRealtime(CHANNEL, value => {
-    if (value && typeof value === "object" && !Array.isArray(value) && "threadId" in value && value.threadId === threadId) refresh();
-  });
   const previousConnection = useRef(connection);
   useEffect(() => {
     if (previousConnection.current !== "connected" && connection === "connected") refresh();

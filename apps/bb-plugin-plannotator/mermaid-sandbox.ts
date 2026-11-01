@@ -1,6 +1,6 @@
 import { MermaidRendererUnavailableError, type DiagramTheme } from "@plannotator/ui/utils/diagram-render";
 import { buildMermaidConfig, buildMermaidThemeVariables, readThemeTokens } from "@plannotator/ui/utils/mermaidTheme";
-import source from "./mermaid-sandbox.generated.txt" with { type: "text" };
+import source from "./mermaid-sandbox.generated.txt?raw" with { type: "text" };
 
 let frame: HTMLIFrameElement | null = null;
 let ready: Promise<void> | null = null;
