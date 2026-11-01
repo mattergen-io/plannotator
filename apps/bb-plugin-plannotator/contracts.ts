@@ -35,9 +35,12 @@ export const setFileSchema = z.object({
   path: z.string(), id: sha.nullable(), sha256: sha.nullable(), revision: z.number().int().nullable(),
   status: z.enum(["unreviewed", "changed", "reviewed", "approved", "unavailable"]), commentCount: z.number().int(), error: z.string().nullable(),
 });
+export const specSchema = z.object({ folder: z.string(), parent: z.string().nullable(), name: z.string() });
+export type Spec = z.infer<typeof specSchema>;
+export const specEntrySchema = z.object({ path: z.string(), kind: z.enum(["file", "directory"]) });
 export const specSetSchema = z.object({
   threadId: z.string(), folder: z.string(), hostId: z.string(), checkoutRoot: z.string(), environmentId: z.string(),
-  files: z.array(setFileSchema), selectedPath: z.string().nullable(),
+  files: z.array(setFileSchema), entries: z.array(specEntrySchema), selectedPath: z.string().nullable(),
 });
 export type SpecSet = z.infer<typeof specSetSchema>;
 export type SetFile = z.infer<typeof setFileSchema>;
@@ -56,7 +59,7 @@ const action = z.enum(["feedback", "approve"]);
 export const CHANNEL = "document-review";
 export const TAB = { id: "document-review", context: { kind: "thread" as const }, availability: "action" as const };
 export const rpcContract = defineRpcContract({
-  session: { input: z.object({ threadId: z.string().min(1) }).strict(), output: z.object({ folder: z.string().nullable(), path: z.string().nullable(), folders: z.array(z.string()), truncated: z.boolean() }) },
+  session: { input: z.object({ threadId: z.string().min(1) }).strict(), output: z.object({ folder: z.string().nullable(), path: z.string().nullable(), specs: z.array(specSchema), truncated: z.boolean() }) },
   specSet: { input: z.object({ threadId: z.string().min(1), folder: folderPath }).strict(), output: specSetSchema },
   open: { input: z.object({ threadId: z.string().min(1), path: documentPath, sha256: sha.optional() }).strict(), output: documentSchema },
   save: { input: target.extend({ annotations: annotationsSchema }), output: z.object({ revision: z.number().int() }) },

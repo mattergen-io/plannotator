@@ -92,7 +92,18 @@ describe('buildDiffFileTree', () => {
     expect(getVisualFileOrder(tree)).toEqual([0, 1]);
   });
 
-  test('empty input is an empty tree', () => {
+  test('native browsers preserve explicit empty folders and every directory level', () => {
+    const entries = [{ path: 'base', kind: 'directory' as const }, { path: 'base/blocks', kind: 'directory' as const },
+      { path: 'base/blocks/empty', kind: 'directory' as const }, { path: 'base/blocks/data.json', kind: 'file' as const }];
+    const tree = buildDiffFileTree(entries, { compactFolders: false, unwrapRoot: false });
+    expect(tree[0].name).toBe('base');
+    expect(tree[0].directory).toBe(entries[0]);
+    expect(getAllFolderPaths(tree)).toEqual(['base', 'base/blocks', 'base/blocks/empty']);
+    expect(tree[0].children![0].children![0]).toMatchObject({ type: 'folder', name: 'empty', children: [] });
+    expect(tree[0].children![0].children![1].file).toBe(entries[3]);
+  });
+
+  test('empty input is an empty tree' , () => {
     expect(buildDiffFileTree([])).toEqual([]);
   });
 });

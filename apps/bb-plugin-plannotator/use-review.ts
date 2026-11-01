@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime, useRealtimeConnectionState, useRpc } from "@get-bb/plugin-sdk/app";
 import type { Annotation } from "@plannotator/ui/types";
-import { CHANNEL, rpcContract, annotationsSchema, targetOf, parentFolder, insideFolder, summarizeDocument, type ReviewDocument, type SpecSet } from "./contracts";
+import { CHANNEL, rpcContract, annotationsSchema, targetOf, parentFolder, insideFolder, summarizeDocument, type ReviewDocument, type SpecSet, type Spec } from "./contracts";
 
 export function useReview(threadId: string, initialPath?: string) {
   const rpc = useRpc<typeof rpcContract>();
   const [document, setDocument] = useState<ReviewDocument | null>(null), [specSet, setSpecSet] = useState<SpecSet | null>(null);
-  const [folders, setFolders] = useState<string[]>([]), [truncated, setTruncated] = useState(false);
+  const [specs, setSpecs] = useState<Spec[]>([]), [truncated, setTruncated] = useState(false);
   const [busy, setBusy] = useState(false), [error, setError] = useState<string | null>(null), [notice, setNotice] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const current = useRef<ReviewDocument | null>(null), currentSet = useRef<SpecSet | null>(null), isDirty = useRef(false), generation = useRef(0);
@@ -46,7 +46,10 @@ export function useReview(threadId: string, initialPath?: string) {
   }, [rpc, threadId, flush, commit, commitSet]);
   const load = useCallback(async (path: string, sha256?: string, discardLocal = false) => {
     if (discardLocal) { await saving.current.catch(() => {}); isDirty.current = false; setDirty(false); }
-    if (!currentSet.current || !insideFolder(path, currentSet.current.folder)) return loadSet(parentFolder(path), path, sha256);
+    if (!currentSet.current || !insideFolder(path, currentSet.current.folder)) {
+      const owner = specs.filter(spec => insideFolder(path, spec.folder)).sort((a, b) => b.folder.length - a.folder.length)[0]?.folder ?? parentFolder(path);
+      return loadSet(owner, path, sha256);
+    }
     const request = ++generation.current;
     await flush();
     if (request !== generation.current) return;
@@ -54,7 +57,7 @@ export function useReview(threadId: string, initialPath?: string) {
     if (request !== generation.current) return;
     if (current.current?.id !== doc.id || current.current?.sha256 !== doc.sha256) setNotice(null);
     commit(doc); isDirty.current = false; setDirty(false);
-  }, [rpc, threadId, flush, commit, loadSet]);
+  }, [rpc, threadId, flush, commit, loadSet, specs]);
   const run = useCallback(async (work: () => Promise<void>) => {
     setBusy(true); setError(null);
     try { await work(); } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
@@ -65,16 +68,21 @@ export function useReview(threadId: string, initialPath?: string) {
     void run(async () => {
       const session = await rpc.call("session", { threadId });
       if (cancelled) return;
-      setFolders(session.folders); setTruncated(session.truncated);
-      const folder = initialPath ? parentFolder(initialPath) : session.folder;
+      setSpecs(session.specs); setTruncated(session.truncated);
+      const folder = initialPath
+        ? session.specs.filter(spec => insideFolder(initialPath, spec.folder)).sort((a, b) => b.folder.length - a.folder.length)[0]?.folder ?? parentFolder(initialPath)
+        : session.folder;
       if (folder) await loadSet(folder, initialPath ?? session.path ?? undefined);
     });
     return () => { cancelled = true; generation.current++; };
   }, [threadId, initialPath, rpc, loadSet, run]);
   const refresh = useCallback(() => {
     const set = currentSet.current, doc = current.current;
-    if (set) void run(() => loadSet(set.folder, doc?.path, doc && doc.sha256 !== doc.currentSha256 ? doc.sha256 : undefined));
-  }, [run, loadSet]);
+    void run(async () => {
+      const session = await rpc.call("session", { threadId }); setSpecs(session.specs); setTruncated(session.truncated);
+      if (set) await loadSet(set.folder, doc?.path, doc && doc.sha256 !== doc.currentSha256 ? doc.sha256 : undefined);
+    });
+  }, [run, loadSet, rpc, threadId]);
   useRealtime(CHANNEL, value => {
     if (value && typeof value === "object" && !Array.isArray(value) && "threadId" in value && value.threadId === threadId) refresh();
   });
@@ -98,5 +106,5 @@ export function useReview(threadId: string, initialPath?: string) {
       isDirty.current = true; setDirty(true); setNotice(null); setError(null);
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }, [commit]);
-  return { rpc, document, specSet, folders, truncated, busy, dirty, error, notice, setNotice, run, load, loadSet, refresh, flush, edit, current, currentSet };
+  return { rpc, document, specSet, specs, truncated, busy, dirty, error, notice, setNotice, run, load, loadSet, refresh, flush, edit, current, currentSet };
 }

@@ -606,3 +606,6 @@ npm install @plannotator/ui @plannotator/core
 ### Reusing the document hierarchy
 
 `buildDiffFileTree` and its navigation helpers in `utils/diffFileTree` accept any `FileTreeInput` with a `path`; diff counts are optional and default to zero. Existing diff callers retain their status/count behavior. The BB spec tree supplies its own review status and comment metadata without inventing diff statuses.
+
+
+`FileTreeInput.kind: "directory"` preserves explicit and empty directory entries. `buildDiffFileTree(entries, { compactFolders: false, unwrapRoot: false })` retains every folder level and an explicit base row for native file browsers. Both options keep the existing diff-tree behavior when omitted. Folder metadata is available on `node.directory`.

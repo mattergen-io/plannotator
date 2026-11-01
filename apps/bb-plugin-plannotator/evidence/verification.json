@@ -183,5 +183,97 @@
       },
       "hashCommand": "sha256sum implementation.ts specs/framework/requirements.md specs/framework/design.md specs/framework/evidence.md (in the recorded scratch root)"
     }
+  },
+  "specNavigationCorrection": {
+    "capturedAt": "2026-11-01T02:26:44.502411+00:00",
+    "checks": [
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator test",
+        "result": "36 passed"
+      },
+      {
+        "command": "DOM_TESTS=1 bun test ./packages/ui/utils/diffFileTree.test.ts ./packages/ui/components/DiffFileTree.test.tsx ./packages/ui/components/Viewer.documentHeader.test.tsx ./packages/ui/components/AnnotationToolbar.selectionActions.test.tsx",
+        "result": "43 passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator typecheck && bun run --cwd packages/ui typecheck",
+        "result": "passed"
+      },
+      {
+        "command": "bun run --cwd apps/bb-plugin-plannotator build",
+        "result": "passed"
+      },
+      {
+        "command": "bb plugin reload plannotator",
+        "result": "running"
+      }
+    ],
+    "grazeSpecs": [
+      {
+        "folder": ".kiro/specs/graze-framework",
+        "parent": null,
+        "name": "graze-framework"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/01-authenticated-application",
+        "parent": ".kiro/specs/graze-framework",
+        "name": "01-authenticated-application"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/01-authenticated-application/a1-foundation",
+        "parent": ".kiro/specs/graze-framework/blocks/01-authenticated-application",
+        "name": "a1-foundation"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/01-authenticated-application/a2-authentication-and-access",
+        "parent": ".kiro/specs/graze-framework/blocks/01-authenticated-application",
+        "name": "a2-authentication-and-access"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/01-authenticated-application/a3-svelte-application",
+        "parent": ".kiro/specs/graze-framework/blocks/01-authenticated-application",
+        "name": "a3-svelte-application"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/01-authenticated-application/a4-independent-applications",
+        "parent": ".kiro/specs/graze-framework/blocks/01-authenticated-application",
+        "name": "a4-independent-applications"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/02-live-views",
+        "parent": ".kiro/specs/graze-framework",
+        "name": "02-live-views"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/03-self-hosted-installation",
+        "parent": ".kiro/specs/graze-framework",
+        "name": "03-self-hosted-installation"
+      },
+      {
+        "folder": ".kiro/specs/graze-framework/blocks/04-workflows",
+        "parent": ".kiro/specs/graze-framework",
+        "name": "04-workflows"
+      }
+    ],
+    "grazeDiscoveryCommand": "bb plugin rpc call plannotator session --input-file /tmp/plannotator-spec-set/graze-session-input.json --json",
+    "native": {
+      "activeSpec": "samples/spec-navigation-demo/graze-framework/blocks/01-authenticated-application/a1-foundation",
+      "docTree": "a1-foundation3 need reviewassetsschema.jsonempty-folderdesign.mdNeeds reviewevidence.mdNeeds reviewrequirements.mdNeeds review",
+      "leftOfViewer": true,
+      "inputs": 0,
+      "firstTimeHighlights": 0
+    },
+    "baseSelection": {
+      "selectorHasBlocks": false,
+      "fileTreeHasBlocks": true,
+      "selectedBase": "samples/spec-navigation-demo/graze-framework"
+    },
+    "nativeJsonPreview": {
+      "opened": true,
+      "path": "samples/spec-navigation-demo/graze-framework/blocks/01-authenticated-application/a1-foundation/assets/schema.json",
+      "editorContentObserved": "{\"example\": \"native BB preview\", \"review\": \"Markdown documents\"}",
+      "fileModified": false
+    },
+    "agentPromptChanged": false
   }
 }

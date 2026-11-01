@@ -2,8 +2,9 @@
 
 Native document review built from this fork’s UI/core workspace sources. BB owns the conversation and file access; Plannotator renders and annotates the document.
 
-Open **Plannotator** in a thread’s side-panel tabs and select a checkout-relative **folder**. Its Markdown documents and descendants form the spec set. Use the collapsible document tree to choose the file shown in the single viewer. The native Markdown file opener selects that file’s parent folder. The chosen set and last open document are remembered per thread.
+Open **Plannotator** in a thread’s side-panel tabs and choose a spec from the left **Spec sets** tree. Only folders with their own `requirements.md` appear. A spec nests beneath its nearest qualifying ancestor; README-only containers are skipped in this selector. For Graze, blocks 01–04 nest directly beneath `graze-framework`, and A1–A4 beneath 01.
 
+The document tree below it uses the selected spec as its base and shows every folder and file, including empty directories. Markdown documents open in the review viewer on the right; supporting files use BB’s native preview. The selection and last open document are remembered per thread. The native Markdown opener chooses the closest owning spec when one exists.
 The tree shows **Needs review**, **Changed**, **Reviewed**, or **Approved**, plus comment counts and pending counts on collapsed folders. Never-reviewed documents have no body highlights. Once Reviewed/Approve establishes a document’s baseline, subsequent changes appear automatically in the viewer.
 
 **Add to chat** and **Send feedback** combine current-version comments across the set into one prompt. **Reviewed** and **Approve** apply only to the displayed document; they reset its baseline while preserving comments. Approval tells the agent to acknowledge and wait. Stale set membership, files, feedback revisions, or checkout identity require a refresh before combined feedback can be sent.
@@ -26,15 +27,13 @@ A set supports up to 200 UTF-8 `.md` / `.markdown` documents, each up to 256 KiB
 
 ## Native BB captures
 
-Captured from a running BB panel using a disposable nested spec set inspired by Graze. Pending counts remain visible on collapsed folders; the open document retains the existing annotation tools.
+Captured from a running BB panel using a disposable Graze-shaped example. The spec selector omits the README-only `blocks` ancestor; the separate file tree preserves actual folders and supporting files. Never-reviewed documents remain unhighlighted.
 
-![Spec set with pending review and combined feedback](assets/native-spec-set.jpg)
-
-![Never-reviewed document without body highlights](assets/native-spec-set-new.jpg)
+![Requirements-based spec selector and left document tree](assets/native-spec-navigation.jpg)
 
 ## Verification
 
-The plugin has 33 passing focused tests and 42 passing shared-UI regression checks, with passing plugin and shared-UI typechecks. See [recorded commands and outcomes](evidence/verification.json) and [generated agent messages](evidence/generated-messages.json).
+The plugin has 36 passing focused tests and 43 passing shared-UI regression checks, with passing plugin and shared-UI typechecks. See [recorded commands and outcomes](evidence/verification.json) and [generated agent messages](evidence/generated-messages.json).
 
 For a standalone sample in this checkout, open `apps/bb-plugin-plannotator/fixtures/document-review.md`. This milestone is installed from a development checkout; Git/npm release packaging, image attachment/upload support, and workspace-relative image routing are not included.
 

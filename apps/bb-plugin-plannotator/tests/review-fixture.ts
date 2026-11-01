@@ -18,9 +18,9 @@ export async function setup() {
       send: async ({ input }) => { state.sent.push(JSON.stringify(input)); if (state.failSend) throw new Error("Connection lost after accepting message"); return {}; },
       promptHistory: async () => ({ prompts: state.sent }), },
     environments: { get: async () => ({ id: "environment-1", status: "ready", path: state.root, hostId: "host-1" }) },
-    files: { listPaths: async ({ path }) => ({ paths: (await readdir(path, { recursive: true, withFileTypes: true }))
-        .filter(entry => entry.isFile() && !relative(path, join(entry.parentPath, entry.name)).split(/[\\/]/).some(part => part === ".git" || part === "node_modules"))
-        .map(entry => ({ path: relative(path, join(entry.parentPath, entry.name)).replace(/\\/g, "/"), kind: "file" })), truncated: state.listingTruncated }),
+    files: { listPaths: async ({ path, includeFiles, includeDirectories }) => ({ paths: (await readdir(path, { recursive: true, withFileTypes: true }))
+        .filter(entry => ((includeFiles && entry.isFile()) || (includeDirectories && entry.isDirectory())) && !relative(path, join(entry.parentPath, entry.name)).split(/[\\/]/).some(part => part === ".git" || part === "node_modules"))
+        .map(entry => ({ path: relative(path, join(entry.parentPath, entry.name)).replace(/\\/g, "/"), kind: entry.isDirectory() ? "directory" : "file" })), truncated: state.listingTruncated }),
       read: async ({ path, rootPath }) => {
         expect(rootPath).toBe(state.root);
         if (relative(await realpath(rootPath!), await realpath(path)).startsWith("..")) throw new Error("Path escapes workspace root");

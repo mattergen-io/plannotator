@@ -9,12 +9,13 @@ import { computeDocumentChanges } from "@plannotator/ui/hooks/useDocumentChanges
 import { parseMarkdownToBlocks } from "@plannotator/ui/utils/parser";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
-import { targetOf, parentFolder, feedbackSelection } from "./contracts";
+import { targetOf, feedbackSelection } from "./contracts";
 import { SpecTree } from "./spec-tree";
+import { SpecSelector } from "./spec-selector";
 
 export function DocumentPanel({ threadId, initialPath }: { threadId: string; initialPath?: string }) {
   const review = useReview(threadId, initialPath), composer = useComposer();
-  const [folder, setFolder] = useState(initialPath ? parentFolder(initialPath) : ".kiro/specs"), [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<EditorMode>("selection"), [inputMethod, setInputMethod] = useState<InputMethod>("drag");
   const [notesOpen, setNotesOpen] = useState(false);
   const [viewport, setViewport] = useState<HTMLElement | null>(null);
@@ -39,7 +40,6 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   useEffect(() => {
     setSelected(null); setUncertain(null); setNotesOpen(!!doc?.annotations.length);
   }, [doc?.id, doc?.sha256]);
-  useEffect(() => { if (review.specSet) setFolder(review.specSet.folder); }, [review.specSet?.folder]);
   const feedbackCount = review.specSet?.files.reduce((count, file) => count + file.commentCount, 0) ?? 0;
   async function prepare() {
     await review.flush();
@@ -72,15 +72,13 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
     composer.insert(`From ${JSON.stringify(doc.path)} (SHA-256 ${doc.sha256}):\n\n${context.text.split("\n").map(line => `> ${line}`).join("\n")}`, { at: "end", block: true }); composer.focus();
   } }] : [];
   return <div className="bb-plannotator-ui bb-plannotator-panel theme-plannotator">
-    <form className="bb-review-path" onSubmit={event => { event.preventDefault(); void review.run(() => review.loadSet(folder)); }}>
-      <label htmlFor={`review-folder-${threadId}`}>Spec set</label>
-      <input id={`review-folder-${threadId}`} aria-label="Spec set folder" list={`review-folders-${threadId}`} value={folder} onChange={event => setFolder(event.target.value)} placeholder=".kiro/specs/my-feature" disabled={review.busy} />
-      <datalist id={`review-folders-${threadId}`}>{review.folders.map(path => <option key={path} value={path} />)}</datalist>
-      <button disabled={review.busy || !folder.trim()} type="submit">Open set</button>
-      <button disabled={review.busy || !review.specSet} onClick={review.refresh} type="button">Refresh</button>
-    </form>
-    {review.truncated && <div className="bb-review-status">Some folder suggestions were omitted. Enter any checkout-relative spec folder.</div>}
-    {review.specSet && <SpecTree specSet={review.specSet} selectedPath={doc?.path ?? null} busy={review.busy} onSelect={path => void review.run(() => review.load(path))} />}
+    <div className="bb-review-workspace">
+      <aside className="bb-review-navigation">
+        <SpecSelector specs={review.specs} selected={review.specSet?.folder ?? null} busy={review.busy} truncated={review.truncated}
+          onSelect={folder => void review.run(() => review.loadSet(folder))} onRefresh={review.refresh} />
+        {review.specSet && <SpecTree specSet={review.specSet} selectedPath={doc?.path ?? null} busy={review.busy} onSelect={path => void review.run(() => review.load(path))} />}
+      </aside>
+      <main className="bb-review-main">
     {review.error && <div role="alert" className="bb-review-error">{review.error}
       {review.dirty && doc && <button disabled={review.busy} onClick={() => void review.run(() => review.load(doc.path, doc.sha256, true))}>Discard local edits and reload saved feedback</button>}
     </div>}
@@ -129,6 +127,8 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
           {!annotations.length && <p className="bb-review-empty-comments">Select text or choose Global comment to add feedback.</p>}
         </div>}
       </ScrollViewportProvider></PortalProvider>}
-    </> : <div className="bb-review-empty">{review.busy ? "Opening document…" : "Choose a spec folder from this thread’s working folder to start a review."}</div>}
+    </> : <div className="bb-review-empty">{review.busy ? "Opening document…" : "Select a spec from the tree to start a review."}</div>}
+      </main>
+    </div>
   </div>;
 }

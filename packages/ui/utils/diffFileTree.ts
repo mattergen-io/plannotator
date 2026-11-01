@@ -20,6 +20,7 @@ export type DiffFileTreeStatus = 'added' | 'modified' | 'deleted' | 'renamed' | 
 /** Hosts may reuse the path tree without inventing diff statuses or counts. */
 export interface FileTreeInput {
   path: string;
+  kind?: "file" | "directory";
   additions?: number;
   deletions?: number;
 }
@@ -41,6 +42,7 @@ export interface DiffFileTreeNode<F extends FileTreeInput = DiffFileTreeFile> {
   /** Index of the file in the input array (file nodes only). */
   fileIndex?: number;
   file?: F;
+  directory?: F;
   children?: DiffFileTreeNode<F>[];
   additions: number;
   deletions: number;
@@ -49,6 +51,7 @@ export interface DiffFileTreeNode<F extends FileTreeInput = DiffFileTreeFile> {
 interface TrieNode<F> {
   children: Map<string, TrieNode<F>>;
   file?: { index: number; data: F };
+  directory?: F;
 }
 
 function buildTrie<F extends FileTreeInput>(files: readonly F[]): TrieNode<F> {
@@ -58,16 +61,12 @@ function buildTrie<F extends FileTreeInput>(files: readonly F[]): TrieNode<F> {
     const segments = files[i].path.split('/').filter(Boolean);
     let current = root;
 
-    for (let j = 0; j < segments.length - 1; j++) {
-      if (!current.children.has(segments[j])) {
-        current.children.set(segments[j], { children: new Map() });
-      }
-      current = current.children.get(segments[j])!;
+    for (const segment of segments) {
+      if (!current.children.has(segment)) current.children.set(segment, { children: new Map() });
+      current = current.children.get(segment)!;
     }
-
-    const fileName = segments[segments.length - 1];
-    const leaf: TrieNode<F> = { children: new Map(), file: { index: i, data: files[i] } };
-    current.children.set(fileName, leaf);
+    if (files[i].kind === 'directory') current.directory = files[i];
+    else current.file = { index: i, data: files[i] };
   }
 
   return root;
@@ -106,6 +105,7 @@ function trieToNodes<F extends FileTreeInput>(
         path: fullPath,
         depth,
         children,
+        ...(child.directory ? { directory: child.directory } : {}),
         additions,
         deletions,
       });
@@ -151,15 +151,18 @@ function fixDepths<F extends FileTreeInput>(nodes: DiffFileTreeNode<F>[], depth:
   }));
 }
 
-export function buildDiffFileTree<F extends FileTreeInput>(files: readonly F[]): DiffFileTreeNode<F>[] {
+/** Native file browsers can preserve every directory level and the base row. */
+export interface FileTreeOptions { compactFolders?: boolean; unwrapRoot?: boolean }
+export function buildDiffFileTree<F extends FileTreeInput>(files: readonly F[], options: FileTreeOptions = {}): DiffFileTreeNode<F>[] {
   if (files.length === 0) return [];
 
   const trie = buildTrie(files);
   let tree = trieToNodes(trie, '', 0);
-  tree = collapseSingleChild(tree);
+  if (options.compactFolders !== false) tree = collapseSingleChild(tree);
 
   // Flat fallback: if the tree is a single root folder with only file children, unwrap it
   if (
+    options.unwrapRoot !== false &&
     tree.length === 1 &&
     tree[0].type === 'folder' &&
     tree[0].children?.every(c => c.type === 'file')

@@ -24,8 +24,12 @@ async function fixture() {
 it("discovers nested sets, keeps new documents unhighlighted, and tracks exact per-document review state", async () => {
   const { harness, state, folder, set, openDocument } = await fixture();
   const session = rpcContract.session.output.parse(await harness.behavior.callRpc("session", { threadId: "thread-1" }));
-  expect(session.folders).toContain(`${folder}/a1`);
-  let collection = await set(); expect(collection.files.map(file => file.path)).toEqual([`${folder}/a1/design.md`, `${folder}/a1/evidence.md`, `${folder}/requirements.md`]);
+  expect(session.specs).toEqual([{ folder, parent: null, name: "framework" }]);
+  await mkdir(join(state.root, folder, "empty"));
+  let collection = await set();
+  expect(collection.entries).toContainEqual({ path: `${folder}/notes.json`, kind: "file" });
+  expect(collection.entries).toContainEqual({ path: `${folder}/empty`, kind: "directory" });
+  expect(collection.files.map(file => file.path)).toEqual([`${folder}/a1/design.md`, `${folder}/a1/evidence.md`, `${folder}/requirements.md`]);
   expect(collection.files.every(file => file.status === "unreviewed")).toBe(true);
   const first = await openDocument("requirements.md"); expect(first.baseline).toBeNull();
   await harness.behavior.callRpc("reviewed", targetOf(first));
@@ -110,4 +114,28 @@ it("rejects oversized collections before reading their document bodies", async (
   await Promise.all(Array.from({ length: 201 }, (_, index) => writeFile(join(state.root, folder, `extra-${index}.md`), "# Extra\n")));
   await expect(set()).rejects.toThrow(/up to 200 Markdown documents/);
   expect(harness.inspection.sdk.callsTo("files.read")).toHaveLength(0);
+});
+
+it("builds Graze’s requirements-only hierarchy and omits README-only ancestors", async () => {
+  const { harness, state } = await setup();
+  const base = ".kiro/specs/graze-framework";
+  const folders = [base, `${base}/blocks/01`, ...[1,2,3,4].map(number => `${base}/blocks/01/a${number}`), ...["02","03","04"].map(number => `${base}/blocks/${number}`)];
+  for (const folder of folders) { await mkdir(join(state.root, folder), { recursive: true }); await writeFile(join(state.root, folder, "requirements.md"), "# Requirements\n"); }
+  await writeFile(join(state.root, base, "blocks/README.md"), "# Blocks\n");
+  const session = rpcContract.session.output.parse(await harness.behavior.callRpc("session", { threadId: "thread-1" }));
+  expect(session.specs).toHaveLength(9);
+  expect(session.specs.find(spec => spec.folder === base)).toMatchObject({ parent: null, name: "graze-framework" });
+  for (const spec of session.specs.filter(spec => spec.folder !== base)) {
+    expect(spec.parent).toBe(/\/a[1-4]$/.test(spec.folder) ? `${base}/blocks/01` : base);
+  }
+  expect(session.specs.some(spec => spec.folder === `${base}/blocks`)).toBe(false);
+});
+it("reparents discovered specs when an intermediate folder gains its own requirements", async () => {
+  const { harness, state } = await setup();
+  await mkdir(join(state.root, "spec/blocks/01/a1"), { recursive: true });
+  for (const folder of ["spec", "spec/blocks/01/a1"]) await writeFile(join(state.root, folder, "requirements.md"), "# Requirements\n");
+  const session = async () => rpcContract.session.output.parse(await harness.behavior.callRpc("session", { threadId: "thread-1" }));
+  expect((await session()).specs.find(spec => spec.name === "a1")?.parent).toBe("spec");
+  await writeFile(join(state.root, "spec/blocks/01/requirements.md"), "# Requirements\n");
+  expect((await session()).specs.find(spec => spec.name === "a1")?.parent).toBe("spec/blocks/01");
 });
