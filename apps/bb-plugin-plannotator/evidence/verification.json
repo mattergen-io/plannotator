@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-10-31T01:10:27.708722+00:00",
+  "capturedAt": "2026-11-01T01:38:47.327838+00:00",
   "bbVersion": "0.48.1",
   "sdkVersion": "0.6.104",
   "checks": [
@@ -9,15 +9,15 @@
     },
     {
       "command": "bun run --cwd apps/bb-plugin-plannotator test",
-      "result": "18 passed"
+      "result": "23 passed"
     },
     {
       "command": "bun run --cwd packages/ui typecheck",
       "result": "passed"
     },
     {
-      "command": "DOM_TESTS=1 bun test ./packages/ui/components/AnnotationToolbar.selectionActions.test.tsx ./packages/ui/components/Viewer.documentHeader.test.tsx ./packages/ui/components/CommentPopover.forcedDialog.test.tsx ./packages/ui/utils/clipboard.test.ts",
-      "result": "40 passed"
+      "command": "DOM_TESTS=1 bun test ./packages/ui/components/AnnotationToolbar.selectionActions.test.tsx ./packages/ui/components/Viewer.documentHeader.test.tsx ./packages/ui/components/CommentPopover.forcedDialog.test.tsx ./packages/ui/utils/clipboard.test.ts ./packages/ui/utils/planDiffEngine.test.ts ./packages/ui/utils/planDiffEngine.ranges.test.ts",
+      "result": "108 passed"
     },
     {
       "command": "bun run --cwd apps/bb-plugin-plannotator build",
@@ -56,5 +56,47 @@
       "implementationUntouched": true
     }
   },
-  "validationBoundary": "Thread send/queue, duplicate suppression, uncertain delivery, and automatic refresh were exercised through the official SDK harness with real SQLite. Live BB checks exercised the viewer, comments, composer, baseline, stale-send rejection, and version history; no successful test message was sent to a live BB conversation."
+  "validationBoundary": "Thread send/queue, duplicate suppression, uncertain delivery, and automatic refresh were exercised through the official SDK harness with real SQLite. Live BB checks exercised the viewer, comments, composer, baseline, stale-send rejection, and version history; no successful test message was sent to a live BB conversation.",
+  "automaticChangeHighlighting": {
+    "capturedAt": "2026-11-01T01:38:47.327838+00:00",
+    "fixturePath": "samples/plannotator-inline-changes.md",
+    "baselineSha256": "823c1955fcd1e6cd394a521baf25342bf1e11f766b433984085b70b089f56f11",
+    "currentSha256": "95b901a4e3458266dec2924a5fbee25ace45466bc3d176f24f8924375123b8e5",
+    "hashCommand": "sha256sum /tmp/plannotator-inline-baseline.md /tmp/plannotator-inline-current.md",
+    "live": {
+      "before": {
+        "changedBlocks": [
+          {
+            "kind": "modified",
+            "text": "This review uses the fast path and refreshes after each agent reply."
+          },
+          {
+            "kind": "added",
+            "text": "Newly added behavior"
+          },
+          {
+            "kind": "added",
+            "text": "Changes appear automatically in the main review document."
+          }
+        ],
+        "addedWords": [
+          "fast",
+          "refreshes after each agent reply"
+        ],
+        "comment": "CommentYou (me) \u00b7 now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
+        "removed": "Removed text since reviewPrevious line 3**slow** \u2026 waits for a manual refreshPrevious line 7This obsolete paragraph will be removed in the next revision.\n\n"
+      },
+      "after": {
+        "changedBlocks": 0,
+        "addedWords": [],
+        "comment": "CommentYou (me) \u00b7 now\"This review uses the fast path and refreshes after each agent reply.\"Live check: changed text remains selectable and commentable.",
+        "removed": false
+      }
+    },
+    "reloadRestoredCommentAndHighlights": true,
+    "finalRemovedTextUsesSharedMarkdownRenderer": true,
+    "noLiveAgentMessageSent": true,
+    "baseline": "# Automatic review highlights\n\nThis review uses the **slow** path and waits for a manual refresh.\n\nKeep this paragraph unchanged so the review stays easy to read.\n\nThis obsolete paragraph will be removed in the next revision.\n\n## Acceptance criteria\n\n- Select changed text and save a comment.\n- Reviewed resets the displayed baseline.\n",
+    "current": "# Automatic review highlights\n\nThis review uses the **fast** path and refreshes after each agent reply.\n\nKeep this paragraph unchanged so the review stays easy to read.\n\n## Acceptance criteria\n\n- Select changed text and save a comment.\n- Reviewed resets the displayed baseline.\n\n## Newly added behavior\n\nChanges appear automatically in the main review document.\n"
+  }
 }

@@ -7,14 +7,13 @@ import type { ExperimentalThreadActionTabProps } from "@get-bb/plugin-sdk/app";
 import { AnnotationType } from "@plannotator/ui/types";
 import { CHANNEL, rpcContract, documentSchema, annotationsSchema } from "../contracts";
 
-vi.mock("@plannotator/ui/components/Viewer", () => ({ Viewer: ({ markdown, onAddAnnotation }: { markdown: string; onAddAnnotation: (value: unknown) => void }) => <div>{markdown}<button onClick={() => onAddAnnotation({ id: "note-1", blockId: "block-1", startOffset: 0, endOffset: 0, type: AnnotationType.GLOBAL_COMMENT, originalText: "", text: "Clarify acceptance criteria", createdA: 1, images: undefined, mentions: undefined })}>Add test comment</button></div> }));
+vi.mock("@plannotator/ui/components/Viewer", () => ({ Viewer: ({ markdown, documentChanges, onAddAnnotation }: { markdown: string; documentChanges?: { type: string }[]; onAddAnnotation: (value: unknown) => void }) => <div data-testid="document-viewer" data-changes={documentChanges?.map(block => block.type).join(",")}>{markdown}<button onClick={() => onAddAnnotation({ id: "note-1", blockId: "block-1", startOffset: 0, endOffset: 0, type: AnnotationType.GLOBAL_COMMENT, originalText: "", text: "Clarify acceptance criteria", createdA: 1, images: undefined, mentions: undefined })}>Add test comment</button></div> }));
 vi.mock("@plannotator/ui/components/AnnotationPanel", () => ({ AnnotationPanel: () => null }));
-vi.mock("@plannotator/ui/components/plan-diff/PlanDiffViewer", () => ({ PlanDiffViewer: () => null }));
 const app = await loadPluginApp(() => import("../app"));
 afterEach(cleanup);
-function mount(composerThread = "thread-1") {
+function mount(composerThread = "thread-1", baseline: string | null = null) {
   const original = documentSchema.parse({ id: "a".repeat(64), threadId: "thread-1", path: "plan.md", hostId: "host-1", checkoutRoot: "/repo", environmentId: "environment-1",
-    sha256: "b".repeat(64), currentSha256: "b".repeat(64), content: "# Plan for revision", annotations: [] as unknown[], revision: 0, baseline: null, approvedAt: null,
+    sha256: "b".repeat(64), currentSha256: "b".repeat(64), content: "# Plan for revision", annotations: [] as unknown[], revision: 0, baseline, approvedAt: null,
     versions: [{ sha256: "b".repeat(64), updatedAt: "2026-10-30", commentCount: 0, approvedAt: null }] });
   let document = original;
   let failSave = false;
@@ -27,7 +26,7 @@ function mount(composerThread = "thread-1") {
     rpc: {
       session: () => ({ path: "plan.md", files: ["plan.md"], truncated: false }), open,
       save: ({ annotations }: { annotations: unknown[] }) => { if (failSave) throw new Error("Feedback changed in another panel"); document = { ...document, annotations: annotationsSchema.parse(annotations), revision: document.revision + 1 }; return { revision: document.revision }; },
-      prepare, send, reviewed: () => ({ ok: true }),
+      prepare, send, reviewed: () => { document = { ...document, baseline: document.content }; return { ok: true }; },
     },
   });
   return { slot, prepare, send, open, failSaving: () => { failSave = true; }, replace: (content: string) => { document = { ...document, content, sha256: "c".repeat(64), currentSha256: "c".repeat(64), annotations: [], revision: 0, versions: [{ ...document.versions[0]!, sha256: "c".repeat(64), commentCount: 0 }] }; } };
@@ -81,4 +80,18 @@ describe("native composer and refresh", () => {
     expect(slot.getByText("Comments (0)")).toBeTruthy();
   });
 
+  it("automatically decorates the document, exposes removals, and clears changes after Reviewed", async () => {
+    const { slot } = mount("thread-1", "# Old plan");
+    await waitFor(() => expect(slot.getByTestId("document-viewer").dataset.changes).toContain("modified"));
+    expect(slot.queryByRole("button", { name: "Changes since review" })).toBeNull();
+    expect(slot.getByRole("region", { name: "Removed text since review" }).textContent).toContain("Old plan");
+    // The same viewer still accepts annotations while comparison is active.
+    fireEvent.click(slot.getByText("Add test comment"));
+    await waitFor(() => expect(slot.getByText("Comments (1)")).toBeTruthy());
+    fireEvent.click(slot.getByText("Reviewed"));
+    await waitFor(() => expect(slot.getByText("No changes since review.")).toBeTruthy());
+    expect(slot.getByTestId("document-viewer").dataset.changes).toBe("unchanged");
+    expect(slot.queryByRole("region", { name: "Removed text since review" })).toBeNull();
+    expect(slot.getByText("Comments (1)")).toBeTruthy();
+  });
 });

@@ -16,3 +16,11 @@
 .bb-plannotator-panel .bb-review-error { color:#f0a9a9; }
 .bb-plannotator-portals { position:fixed; inset:0; pointer-events:none; z-index:1000; font-size:14px; line-height:1.5; }
 .bb-plannotator-portals > * { pointer-events:auto; }
+
+.bb-plannotator-panel .bb-review-change-legend span:first-child { color:#6ecf9a; }
+.bb-plannotator-panel .bb-review-change-legend span:last-child { color:#e5bd66; }
+.bb-plannotator-panel .bb-review-removed { margin:20px 0; padding:12px; border:1px solid #d9777740; border-radius:6px; background:#d9777710; }
+.bb-plannotator-panel .bb-review-removed h3 { font-size:13px; font-weight:600; margin-bottom:8px; }
+.bb-plannotator-panel .bb-review-removed span { font-size:11px; color:var(--muted-foreground); }
+.bb-plannotator-panel .bb-review-removed-content { display:block; overflow-wrap:anywhere; color:#c36a6a; margin:4px 0 10px; }
+.bb-plannotator-panel .bb-review-removed-content * { color:inherit; font-size:inherit; margin-block:4px; }

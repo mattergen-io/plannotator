@@ -596,3 +596,8 @@ npm install @plannotator/ui @plannotator/core
 ## Embedded portal placement
 
 `PortalProvider` from `@plannotator/ui/components/PortalProvider` takes an optional host-owned `container` for floating document controls. The BB plugin provides a styled portal root outside panel clipping. Without a provider, existing controls keep their `document.body` placement. `setClipboardWriter` from `utils/clipboard` lets an embedding host supply its native text clipboard writer; passing null restores the standalone behavior.
+
+
+### Automatic document change paint
+
+`Viewer.documentChanges` accepts the blocks from `computeDocumentChanges(baseline, content)` in `hooks/useDocumentChanges`. It paints additions and edits in the normal document, with native CSS range highlights for added words in eligible prose. It does not insert text wrappers or alter block ids, so annotation anchors stay stable when the baseline resets. Unsupported range-highlighting APIs fall back to block paint. Omit the prop to retain the existing viewer behavior. The embedding host can show removed text outside the viewer's annotation root, as the BB panel does with `RenderedMarkdown`.

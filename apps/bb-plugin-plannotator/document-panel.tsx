@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useComposer } from "@get-bb/plugin-sdk/app";
 import { Viewer, type ViewerHandle } from "@plannotator/ui/components/Viewer";
+import { RenderedMarkdown } from "@plannotator/ui/components/RenderedMarkdown";
 import { AnnotationPanel } from "@plannotator/ui/components/AnnotationPanel";
 import { ScrollViewportProvider } from "@plannotator/ui/hooks/useScrollViewport";
 import { PortalProvider } from "@plannotator/ui/components/PortalProvider";
-import { PlanDiffViewer } from "@plannotator/ui/components/plan-diff/PlanDiffViewer";
-import { computePlanDiff } from "@plannotator/ui/utils/planDiffEngine";
+import { computeDocumentChanges } from "@plannotator/ui/hooks/useDocumentChanges";
 import { parseMarkdownToBlocks } from "@plannotator/ui/utils/parser";
 import type { Annotation, EditorMode, InputMethod } from "@plannotator/ui/types";
 import { useReview } from "./use-review";
@@ -15,15 +15,19 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   const review = useReview(threadId, initialPath), composer = useComposer();
   const [path, setPath] = useState(initialPath ?? ""), [selected, setSelected] = useState<string | null>(null);
   const [mode, setMode] = useState<EditorMode>("selection"), [inputMethod, setInputMethod] = useState<InputMethod>("drag");
-  const [notesOpen, setNotesOpen] = useState(false), [showChanges, setShowChanges] = useState(false);
-  const [diffMode, setDiffMode] = useState<"clean" | "classic" | "raw">("clean");
+  const [notesOpen, setNotesOpen] = useState(false);
   const [viewport, setViewport] = useState<HTMLElement | null>(null);
   const [portal, setPortal] = useState<HTMLElement | null>(null);
   const [uncertain, setUncertain] = useState<"feedback" | "approve" | null>(null);
   const viewer = useRef<ViewerHandle>(null);
   const doc = review.document;
   const blocks = useMemo(() => parseMarkdownToBlocks(doc?.content ?? ""), [doc?.content]);
-  const diff = useMemo(() => doc?.baseline !== null && doc?.baseline !== undefined ? computePlanDiff(doc.baseline, doc.content) : null, [doc?.baseline, doc?.content]);
+  const diff = useMemo(() => doc?.baseline !== null && doc?.baseline !== undefined ? computeDocumentChanges(doc.baseline, doc.content) : null, [doc?.baseline, doc?.content]);
+  const removals = useMemo(() => (diff?.blocks ?? []).flatMap(block => {
+    const content = block.type === "removed" ? block.content : block.type === "modified"
+      ? block.inlineTokens ? block.inlineTokens.filter(token => token.type === "removed").map(token => token.value).join(" … ") : block.oldContent : null;
+    return content?.trim() ? [{ line: block.oldStart, content }] : [];
+  }), [diff]);
   const annotations = (doc?.annotations ?? []) as Annotation[];
   useEffect(() => {
     const element = document.createElement("div");
@@ -33,7 +37,7 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
   }, []);
   useEffect(() => {
     if (doc) setPath(doc.path);
-    setSelected(null); setShowChanges(false); setUncertain(null); setNotesOpen(!!doc?.annotations.length);
+    setSelected(null); setUncertain(null); setNotesOpen(!!doc?.annotations.length);
   }, [doc?.id, doc?.sha256]);
   async function prepare() {
     await review.flush();
@@ -94,20 +98,23 @@ export function DocumentPanel({ threadId, initialPath }: { threadId: string; ini
         <label>Review version <select aria-label="Review version" disabled={review.busy} value={doc.sha256} onChange={event => void review.run(() => review.load(doc.path, event.target.value))}>
           {doc.versions.map(version => <option key={version.sha256} value={version.sha256}>{version.sha256 === doc.currentSha256 ? "Current" : "Earlier"} · {version.sha256.slice(0,8)} · {version.commentCount} comments</option>)}
         </select></label>
-        {diff && <button onClick={() => setShowChanges(!showChanges)}>{showChanges ? "Document" : "Changes since review"}</button>}
+        {diff && <span className="bb-review-change-legend">{diff.stats.additions || diff.stats.deletions ? <>Changes since review: <span>added</span> · <span>edited</span></> : "No changes since review."}</span>}
       </div>
       {historical && <div className="bb-review-status">Viewing an earlier document version and its saved feedback. <button onClick={() => void review.run(() => review.load(doc.path))}>View current</button></div>}
       {portal && <PortalProvider container={portal}><ScrollViewportProvider viewport={viewport}>
         <div ref={setViewport} className="bb-review-document" aria-label="Review document">
-          {showChanges && diff ? <PlanDiffViewer diffBlocks={diff.blocks} diffStats={diff.stats} diffMode={diffMode} onDiffModeChange={setDiffMode} onPlanDiffToggle={() => setShowChanges(false)} baseVersionLabel="last reviewed version" /> :
           <Viewer key={`${doc.id}:${doc.sha256}`} ref={viewer} blocks={blocks} markdown={doc.content} annotations={annotations} mode={mode} inputMethod={inputMethod} taterMode={false}
             onAddAnnotation={annotation => { review.edit(current => [...current, annotation]); setNotesOpen(true); }} onSelectAnnotation={setSelected} selectedAnnotationId={selected}
             onDeleteAnnotation={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}
             onEditAnnotation={(id, updates) => review.edit(current => current.map(annotation => annotation.id === id ? { ...annotation, ...updates } : annotation))}
-            maxWidth={null} allowImages={false} quickLabels={false} disableCodePathValidation gridEnabled={false} sourceInfo={doc.path} readOnly={historical}
+            documentChanges={diff?.blocks} maxWidth={null} allowImages={false} quickLabels={false} disableCodePathValidation gridEnabled={false} sourceInfo={doc.path} readOnly={historical}
             annotationHeader={{ onInputMethodChange: setInputMethod, onModeChange: setMode, hideQuickLabel: true }}
             selectionActions={selectionActions} copyLabel="Copy document" commentDraftKey={`${doc.id}:${doc.sha256}`}
-            resolveLocalLink={() => ({ kind: "unavailable", title: "Open linked documents through the document picker." })} />}
+            resolveLocalLink={() => ({ kind: "unavailable", title: "Open linked documents through the document picker." })} />
+          {!!removals.length && <section className="bb-review-removed" aria-label="Removed text since review">
+            <h3>Removed text since review</h3>
+            {removals.map((removed, index) => <div key={index}><span>Previous line {removed.line}</span><del className="bb-review-removed-content"><RenderedMarkdown markdown={removed.content} resolveLocalLink={() => ({ kind: "unavailable", title: "Removed text from the previous review." })} resolveImage={() => ({ kind: "unavailable", title: "Image from the previous review." })} /></del></div>)}
+          </section>}
         </div>
         {notesOpen && <div className="bb-review-comments"><AnnotationPanel presentation="embedded" isOpen annotations={annotations} blocks={blocks} selectedId={selected} onSelect={setSelected}
           onDelete={id => { viewer.current?.removeHighlight(id); review.edit(current => current.filter(annotation => annotation.id !== id)); }}

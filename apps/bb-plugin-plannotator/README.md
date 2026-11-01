@@ -4,6 +4,8 @@ Native document review built from this fork’s UI/core workspace sources. BB ow
 
 Open **Plannotator** in a thread’s side-panel tabs, choose a checkout-relative Markdown file, select text or add a global comment, then choose **Add to chat**, **Send feedback**, **Reviewed**, or **Approve**. Approval applies only to the displayed content hash and tells the agent to acknowledge and wait.
 
+Changes since the last Reviewed/Approved baseline appear automatically in the main document: green additions, amber edited blocks, and word highlights within eligible prose. Removed text appears beneath the document. Reviewed and Approve clear these highlights while preserving comments.
+
 Feedback is stored per thread, working-folder identity, document, and content hash. Earlier review versions remain available when an agent edits the file. File changes and working-folder moves invalidate direct send/approval until refresh. Existing composer drafts and attachments are preserved.
 
 ## Development
@@ -22,15 +24,15 @@ The first milestone supports UTF-8 `.md` / `.markdown` files up to 256 KiB and 1
 
 ## Native BB captures
 
-Captured from a running BB thread panel using a deterministic review fixture. The history view retains a global comment and a selected-text comment after the document changes.
+Captured from a running BB thread panel. The same document remains selectable and commentable while showing changes. The second capture shows removed text below the current document.
 
-![Native review history](assets/native-review.jpg)
+![Comment on automatically highlighted text](assets/native-review.jpg)
 
-![Changes since the reviewed version](assets/native-changes.jpg)
+![Automatic changes in the main review document](assets/native-changes.jpg)
 
 ## Verification
 
-The plugin has 18 passing focused tests and 40 passing shared-UI regression checks, with passing plugin and shared-UI typechecks. See [recorded commands and outcomes](evidence/verification.json) and [generated agent messages](evidence/generated-messages.json).
+The plugin has 23 passing focused tests and 108 passing shared-UI/diff regression checks, with passing plugin and shared-UI typechecks. See [recorded commands and outcomes](evidence/verification.json) and [generated agent messages](evidence/generated-messages.json).
 
 For a standalone sample in this checkout, open `apps/bb-plugin-plannotator/fixtures/document-review.md`. This milestone is installed from a development checkout; Git/npm release packaging, image attachment/upload support, and workspace-relative image routing are not included.
 

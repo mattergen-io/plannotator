@@ -1912,3 +1912,7 @@ body:has([data-popout="true"]) [data-sidebar-tabs="true"] {
 /* CSS assets keep reusable components portable across host bundlers. */
 .pn-tater-sitting { background-image: url("./sprite_package_new/sprite.png"); }
 .pn-tater-pullup { background-image: url("./sprite_package_pulluphang/sprite.png"); }
+
+/* Optional baseline paint: no wrapper nodes, so comment positions stay stable. */
+[data-document-change="added"] { background:color-mix(in srgb, #45b87b 15%, transparent); box-shadow:-3px 0 #45b87b; border-radius:2px; }
+[data-document-change="modified"] { background:color-mix(in srgb, #d8aa45 9%, transparent); box-shadow:-3px 0 #d8aa45; border-radius:2px; }

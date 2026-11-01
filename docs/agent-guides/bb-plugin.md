@@ -14,6 +14,12 @@ The independently maintained mattergen-io fork owns this integration. Routine up
 - [x] Refresh after agent replies and retain feedback across document changes.
 - [x] Focused automated checks, build, and live BB verification.
 
+## Automatic change highlighting follow-up
+
+- [x] Show changes against the reviewed baseline in the normal annotatable document.
+- [x] Keep removed text visible and clear highlights when the baseline resets.
+- [x] Verify annotations, refresh, history, and native BB rendering; build and reload.
+
 ## Behavior
 
 Open a Markdown file from a thread’s right-panel **Plannotator** action, or through BB’s native Markdown file opener. The file comes from that thread’s current checkout. Select text, use a global comment, or suggest a deletion with Plannotator’s existing controls. **Add to chat** appends the generated review prompt to the native composer, preserving its draft and attachments. **Send feedback** queues that prompt to the same thread. An active agent receives it through BB’s normal queue.
@@ -22,7 +28,7 @@ Open a Markdown file from a thread’s right-panel **Plannotator** action, or th
 
 Comments are stored per thread, checkout identity, file, and content hash in the plugin’s SQLite database. Edits produce a new review version; previous comments remain available in the version selector. Earlier versions are read-only. Concurrent feedback saves reject stale revisions; the user can explicitly discard local edits and reload the saved review. Ambiguous sends retain their operation marker and reconcile against prompt history before another send.
 
-Thread completion/failure signals and reconnect refresh the saved file. External edits can use **Refresh**. The changes view compares against the last Reviewed/Approved baseline using Plannotator’s existing diff renderer.
+Thread completion/failure signals and reconnect refresh the saved file. External edits can use **Refresh**. The main document automatically highlights changes against the last Reviewed/Approved baseline. Added blocks are green; edited blocks are amber, with added words highlighted inside eligible prose. Removed text is rendered below the document. There is no separate changes-view toggle. Text selection and annotations use the same document throughout; resetting the baseline clears its change paint without changing comment anchors.
 
 ## Implementation
 
@@ -32,13 +38,14 @@ Plannotator CSS is generated from the fork, then scoped to the plugin’s docume
 
 ## Verification
 
-- 18 plugin tests pass: real SQLite persistence/reload, path confinement, stale files/checkouts/feedback, thread ownership, queueing, approval scope, duplicate suppression, uncertain-delivery recovery, composer preservation, refresh, host portals, native clipboard, and public-SDK imports.
-- 40 existing shared-UI tests pass for toolbar selection actions, document headers, forced comment dialogs, and clipboard defaults.
+- 23 plugin tests pass: real SQLite persistence/reload, path confinement, stale files/checkouts/feedback, thread ownership, queueing, approval scope, duplicate suppression, uncertain-delivery recovery, composer preservation, refresh, host portals, native clipboard, and public-SDK imports.
+- 108 existing shared-UI/diff tests pass for toolbar selection actions, document headers, forced comment dialogs, clipboard defaults, and diff-engine tokens/ranges.
 - Plugin and full shared-UI typechecks pass; the plugin builds and reloads successfully.
 - Live BB checks created global and selected-text comments, verified native composer insertion, restored the composer’s empty draft, reset a baseline, rejected a stale send, refreshed an agent-produced revision, reopened its earlier comments, and rendered the comparison, TypeScript fence, and Mermaid diagram.
+- The automatic-highlighting follow-up also verified a selected-text comment on changed prose, clearing paint and removals with Reviewed while preserving that comment, and restoring it with the change paint after reload. Native range highlights add no text wrappers; browsers without that API retain block-level paint.
 - Fresh agents in scratch folders followed the actual generated messages: feedback revised only the Markdown file; approval acknowledged and waited without changing files.
 
-Reproducible commands and recorded outcomes: [verification.json](../../apps/bb-plugin-plannotator/evidence/verification.json). Actual generated messages: [generated-messages.json](../../apps/bb-plugin-plannotator/evidence/generated-messages.json). Captured native panels: [review history](../../apps/bb-plugin-plannotator/assets/native-review.jpg) and [changes](../../apps/bb-plugin-plannotator/assets/native-changes.jpg).
+Reproducible commands and recorded outcomes: [verification.json](../../apps/bb-plugin-plannotator/evidence/verification.json). Actual generated messages: [generated-messages.json](../../apps/bb-plugin-plannotator/evidence/generated-messages.json). Captured native panels: [comment on highlighted text](../../apps/bb-plugin-plannotator/assets/native-review.jpg) and [automatic changes](../../apps/bb-plugin-plannotator/assets/native-changes.jpg).
 
 Successful live agent-message delivery was not exercised; that contract and automatic refresh were verified through the SDK harness.
 
