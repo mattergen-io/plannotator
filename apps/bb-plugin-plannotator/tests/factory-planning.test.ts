@@ -134,3 +134,17 @@ it("preserves both exact review marks when Design documents are reviewed concurr
   ).toBe(true);
   expect(view.state?.revision).toBe(2);
 }, 30000);
+
+it("offers a clear setup message when the project has no Beads workspace", async () => {
+  const f = await factoryFixture({ initializeBeads: false });
+  const view = await f.view();
+  expect(view.configured).toBe(false);
+  expect(view.error).toBe(
+    "This project doesn't have a Beads workspace yet. Select Initialize project Beads to set one up.",
+  );
+  await f.harness.behavior.callRpc("factorySetup", {
+    threadId: f.threadId,
+    folder: f.folder,
+  });
+  expect((await f.view()).configured).toBe(true);
+}, 30000);

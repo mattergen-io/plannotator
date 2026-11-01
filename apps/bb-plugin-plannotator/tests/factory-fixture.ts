@@ -25,7 +25,7 @@ const disposers: (() => Promise<void>)[] = [];
 afterEach(async () => {
   for (const dispose of disposers.splice(0).reverse()) await dispose();
 });
-export async function factoryFixture() {
+export async function factoryFixture({ initializeBeads = true } = {}) {
   const root = await mkdtemp(join(tmpdir(), "bb-factory-test-"));
   const git = (...args: string[]) =>
     execFileSync("git", args, { cwd: root, encoding: "utf8" });
@@ -43,18 +43,19 @@ export async function factoryFixture() {
   );
   git("add", ".");
   git("commit", "-qm", "Fixture baseline");
-  execFileSync(
-    "bd",
-    [
-      "init",
-      "--prefix",
-      "bf",
-      "--skip-agents",
-      "--skip-hooks",
-      "--non-interactive",
-    ],
-    { cwd: root, stdio: "pipe" },
-  );
+  if (initializeBeads)
+    execFileSync(
+      "bd",
+      [
+        "init",
+        "--prefix",
+        "bf",
+        "--skip-agents",
+        "--skip-hooks",
+        "--non-interactive",
+      ],
+      { cwd: root, stdio: "pipe" },
+    );
   const host = experimental_createHostEntryHarness(hostEntry);
   const faults = {
     taskCreatesBeforeFailure: null as number | null,

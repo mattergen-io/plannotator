@@ -37,10 +37,18 @@ export function beadsClient(bb: BbPluginApi) {
     args: string[],
   ) => {
     const result = await command(hostId, root, program, args);
-    if (result.code !== 0)
+    if (result.code !== 0) {
+      if (
+        program === "bd" &&
+        /no \.beads directory found/i.test(`${result.stdout}\n${result.stderr}`)
+      )
+        throw new Error(
+          "This project doesn't have a Beads workspace yet. Select Initialize project Beads to set one up.",
+        );
       throw new Error(
         `${program}: ${result.stderr || result.stdout}`.slice(0, 8192),
       );
+    }
     return result.stdout;
   };
   async function json(hostId: string, root: string, args: string[]) {
