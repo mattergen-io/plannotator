@@ -9,6 +9,7 @@ const app = await loadPluginApp(() => import("../app"));
 afterEach(cleanup);
 
 describe("iframe review bridge", () => {
+  it("does not take over BB’s Markdown file viewer", () => { expect(app.fileOpeners).toEqual([]); });
   function mount(composerThread = "thread-1") {
     const slot = renderSlot<ExperimentalThreadActionTabProps>(app.tabs[0]! as { component: React.ComponentType<ExperimentalThreadActionTabProps> },
       { threadId: "thread-1", environment: null, params: null },
