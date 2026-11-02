@@ -1,6 +1,7 @@
 import { ImportSpec } from "./import-spec";
 import { PhaseDocuments } from "./phase-documents";
 import { RunControls } from "./run-controls";
+import { PhaseProgress } from "./phase-progress";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReviewPlatform, useReviewRefresh } from "../review-platform";
 import { type FactoryView } from "./contracts";
@@ -30,6 +31,7 @@ export function FactoryControls({
     [error, setError] = useState<string | null>(null),
     [busy, setBusy] = useState(false),
     [open, setOpen] = useState(false);
+  const [decision, setDecision] = useState<"continue" | "split" | "">("");
   const [newSpec, setNewSpec] = useState(false),
     [name, setName] = useState(""),
     [idea, setIdea] = useState("");
@@ -62,6 +64,7 @@ export function FactoryControls({
     };
   }, [refresh]);
   useReviewRefresh(refresh);
+  useEffect(() => { setDecision(""); }, [folder, view?.state?.phase]);
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
     setError(null);
@@ -103,6 +106,7 @@ export function FactoryControls({
   if (state && state.threadId !== threadId)
     return (
       <section className="bb-factory" aria-label="Spec workflow and factory">
+        <PhaseProgress state={state} />
         <p>This spec is associated with another planning thread.</p>
         <button onClick={() => platform.openThread(state.threadId)}>
           Open planning thread
@@ -111,90 +115,16 @@ export function FactoryControls({
     );
   return (
     <section className="bb-factory" aria-label="Spec workflow and factory">
+      <PhaseProgress state={state} />
       <div className="bb-factory-summary">
-        <button aria-expanded={open} onClick={() => setOpen(!open)}>
-          {state
-            ? `${state.phase[0].toUpperCase() + state.phase.slice(1)} · ${state.mode === "decomposed" ? "Broken into child specs" : state.mode === "ready" ? "Ready for implementation" : `${required.length - pending}/${required.length} reviewed`}`
-            : "Spec workflow"}
-        </button>
+        <button aria-expanded={open} onClick={() => setOpen(!open)}>Spec workflow</button>
+        <button onClick={() => { setNewSpec(!newSpec); setOpen(true); }}>New spec</button>
         <button
-          onClick={() => {
-            setNewSpec(!newSpec);
-            setOpen(true);
-          }}
-        >
-          New spec
-        </button>
-        {state?.mode === "draft" && (
-          <>
-            {state.phase === "requirements" ? (
-              <>
-                <button disabled={busy} onClick={() => void draft("sizing")}>
-                  Assess size
-                </button>
-                <button
-                  disabled={
-                    busy ||
-                    !!pending ||
-                    !required.length ||
-                    (state.phase === "requirements" &&
-                      !state.sizing?.assessment)
-                  }
-                  onClick={() => void accept("continue")}
-                >
-                  Accept → Design
-                </button>
-                <button
-                  disabled={
-                    busy ||
-                    !!pending ||
-                    !required.length ||
-                    (state.phase === "requirements" &&
-                      !state.sizing?.assessment)
-                  }
-                  onClick={() => void accept("split")}
-                >
-                  Accept → Break down
-                </button>
-              </>
-            ) : (
-              <button
-                disabled={busy || !!pending || !required.length || !sizingReady}
-                onClick={() => void accept()}
-              >
-                {state.phase === "tasks"
-                  ? "Accept Tasks & publish"
-                  : "Accept Design → Tasks"}
-              </button>
-            )}
-          </>
-        )}
-        {state?.mode === "publishing" && (
-          <button disabled={busy} onClick={() => void accept()}>
-            Resume publication
-          </button>
-        )}
-        {state?.pendingPrompt && (
-          <button
-            disabled={busy}
-            onClick={() =>
-              void act(() =>
-                rpc.call("factoryDeliver", {
-                  threadId,
-                  folder: folder!,
-                  resend: true,
-                }),
-              )
-            }
-          >
-            Reconcile / resend phase instruction
-          </button>
-        )}
-        {(active ?? view?.runs[0]) && (
-          <span role="status">
-            Factory {(active ?? view!.runs[0]).state.stage}
-          </span>
-        )}
+          disabled={busy || !state || !["draft", "publishing"].includes(state.mode) || !!state.pendingPrompt || !!pending || !required.length || !sizingReady || (state.phase === "requirements" && !decision)}
+          onClick={() => void accept(state?.phase === "requirements" ? decision || undefined : undefined)}
+        >{state?.mode === "publishing" ? "Resume publication" : "Approve phase"}</button>
+        {state?.mode === "draft" && <span role="status">{required.length - pending}/{required.length} documents reviewed{state.phase === "requirements" && !state.sizing?.assessment ? " · Size assessment required" : ""}{state.phase === "requirements" && state.sizing?.assessment && !decision ? " · Choose what follows Requirements" : ""}</span>}
+        {(active ?? view?.runs[0]) && <span role="status">Factory {(active ?? view!.runs[0]).state.stage}</span>}
         {busy && <span role="status">Updating…</span>}
       </div>
       {error && (
@@ -265,6 +195,18 @@ export function FactoryControls({
                 Spec {view?.spec?.id} · revision {state.revision} ·{" "}
                 {state.acceptances.length} acceptance records
               </p>
+              {state.mode === "draft" && state.phase === "requirements" && <div className="bb-factory-decision">
+                <button disabled={busy} onClick={() => void draft("sizing")}>Assess size</button>
+                {state.sizing?.assessment && <p>{state.sizing.assessment}</p>}
+                <label>After Requirements
+                  <select value={decision} disabled={busy} onChange={event => setDecision(event.target.value as "continue" | "split" | "")}>
+                    <option value="">Choose an outcome</option>
+                    <option value="continue">Continue to Design</option>
+                    <option value="split">Break into child specs</option>
+                  </select>
+                </label>
+              </div>}
+              {state.pendingPrompt && <button disabled={busy} onClick={() => void act(() => rpc.call("factoryDeliver", { threadId, folder: folder!, resend: true }))}>Reconcile / resend phase instruction</button>}
               {state.mode === "draft" && (
                 <button disabled={busy} onClick={() => void draft(state.phase)}>
                   Draft / revise {state.phase} with agent

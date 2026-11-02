@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import React from "react";
 import { afterEach, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { renderSlot } from "@get-bb/plugin-sdk/testing/app";
 import { FactoryControls } from "../factory/controls";
+import { PhaseProgress } from "../factory/phase-progress";
 import { ReviewPlatformContext, type ReviewPlatform } from "../review-platform";
 import { useRpc, useRealtime } from "@get-bb/plugin-sdk/app";
 import {
@@ -169,14 +170,15 @@ it("requires explicit confirmation to import earlier accepted phases", async () 
 });
 it("requires current reviews and a sizing assessment before accepting Requirements", async () => {
   const { slot, review, accept, draft, flush } = mount();
-  await waitFor(() => expect(slot.getByText("Accept → Design")).toBeTruthy());
+  await waitFor(() => expect(slot.getByText("Approve phase")).toBeTruthy());
+  fireEvent.click(slot.getByText("Spec workflow"));
   expect(
-    (slot.getByText("Accept → Design") as HTMLButtonElement).disabled,
+    (slot.getByText("Approve phase") as HTMLButtonElement).disabled,
   ).toBe(true);
   review();
   await slot.behavior.emitRealtime(CHANNEL, { threadId: "planner" });
   expect(
-    (slot.getByText("Accept → Design") as HTMLButtonElement).disabled,
+    (slot.getByText("Approve phase") as HTMLButtonElement).disabled,
   ).toBe(true);
   fireEvent.click(slot.getByText("Assess size"));
   await waitFor(() =>
@@ -184,12 +186,12 @@ it("requires current reviews and a sizing assessment before accepting Requiremen
       expect.objectContaining({ action: "sizing" }),
     ),
   );
+  expect((slot.getByText("Approve phase") as HTMLButtonElement).disabled).toBe(true);
+  fireEvent.change(slot.getByLabelText("After Requirements"), { target: { value: "continue" } });
   await waitFor(() =>
-    expect(
-      (slot.getByText("Accept → Design") as HTMLButtonElement).disabled,
-    ).toBe(false),
+    expect((slot.getByText("Approve phase") as HTMLButtonElement).disabled).toBe(false),
   );
-  fireEvent.click(slot.getByText("Accept → Design"));
+  fireEvent.click(slot.getByText("Approve phase"));
   await waitFor(() =>
     expect(accept).toHaveBeenCalledWith({
       threadId: "planner",
@@ -216,5 +218,42 @@ it("shows Beads errors and lets the user retry", async () => {
   await waitFor(() =>
     expect(slot.getByLabelText("Current phase")).toBeTruthy(),
   );
+  slot.unmount();
+});
+
+
+it("keeps phase indicators visible as phases advance or reopen", () => {
+  const requirements = initial().state!;
+  const accepted = { phase: "requirements" as const, at: "2026-01-01T00:00:00Z", documents: [], inventory: [] };
+  const { getByLabelText, rerender } = render(<PhaseProgress state={requirements} />);
+  expect(getByLabelText("Requirements: Current")).toBeTruthy();
+  expect(getByLabelText("Design: Upcoming")).toBeTruthy();
+  expect(getByLabelText("Tasks: Upcoming")).toBeTruthy();
+  rerender(<PhaseProgress state={{ ...requirements, phase: "design", acceptances: [accepted] }} />);
+  expect(getByLabelText("Requirements: Approved")).toBeTruthy();
+  expect(getByLabelText("Design: Current")).toBeTruthy();
+  expect(getByLabelText("Tasks: Upcoming")).toBeTruthy();
+  rerender(<PhaseProgress state={{ ...requirements, acceptances: [accepted] }} />);
+  expect(getByLabelText("Requirements: Current")).toBeTruthy();
+  expect(getByLabelText("Design: Upcoming")).toBeTruthy();
+  rerender(<PhaseProgress state={{ ...requirements, mode: "decomposed", acceptances: [accepted] }} />);
+  expect(getByLabelText("Requirements: Approved")).toBeTruthy();
+  expect(getByLabelText("Design: Not applicable")).toBeTruthy();
+  expect(getByLabelText("Tasks: Not applicable")).toBeTruthy();
+});
+
+
+it("approves Requirements for breakdown only after choosing it", async () => {
+  const { slot, review, accept, draft } = mount();
+  await waitFor(() => expect(slot.getByText("Spec workflow")).toBeTruthy());
+  fireEvent.click(slot.getByText("Spec workflow"));
+  review();
+  await slot.behavior.emitRealtime(CHANNEL, { threadId: "planner" });
+  fireEvent.click(slot.getByText("Assess size"));
+  await waitFor(() => expect(draft).toHaveBeenCalled());
+  await waitFor(() => expect(slot.getByText("Small leaf; continue to Design.")).toBeTruthy());
+  fireEvent.change(slot.getByLabelText("After Requirements"), { target: { value: "split" } });
+  fireEvent.click(slot.getByText("Approve phase"));
+  await waitFor(() => expect(accept).toHaveBeenCalledWith(expect.objectContaining({ decision: "split" })));
   slot.unmount();
 });

@@ -70,6 +70,14 @@
 .bb-plannotator-panel .bb-review-document [data-viewer-annotation-controls], .bb-plannotator-panel .bb-review-document [data-sticky-actions] { padding-block:4px; }
 .bb-plannotator-panel .bb-review-document [data-viewer-document-header] + [data-block-id] { margin-top:8px; }
 .bb-plannotator-panel .bb-factory { flex:0 0 auto; border-bottom:1px solid var(--border); font-size:12px; max-height:55%; overflow:auto; }
+.bb-plannotator-panel .bb-phase-progress { display:flex; align-items:center; gap:4px; margin:0; padding:7px 8px 2px; list-style:none; flex-wrap:wrap; }
+.bb-plannotator-panel .bb-phase { display:flex; flex:0 0 auto; align-items:center; gap:5px; padding:4px 7px; border:1px solid var(--border); border-radius:5px; color:var(--muted-foreground); white-space:nowrap; }
+.bb-plannotator-panel .bb-phase-current, .bb-plannotator-panel .bb-phase-publishing { border-color:var(--primary); color:var(--foreground); background:color-mix(in srgb, var(--primary) 12%, transparent); }
+.bb-plannotator-panel .bb-phase-approved .bb-phase-marker, .bb-plannotator-panel .bb-phase-current .bb-phase-marker { color:var(--primary); }
+.bb-plannotator-panel .bb-phase-status { font-size:10px; color:var(--muted-foreground); }
+@media (max-width: 600px) { .bb-plannotator-panel .bb-phase { padding:4px 5px; } .bb-plannotator-panel .bb-phase-status { display:none; } }
+.bb-plannotator-panel .bb-factory-decision { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+.bb-plannotator-panel .bb-factory-decision p { flex-basis:100%; margin:2px 0; }
 .bb-plannotator-panel .bb-factory-summary { display:flex; align-items:center; flex-wrap:wrap; gap:5px; padding:5px 8px; }
 .bb-plannotator-panel .bb-factory-summary > span { color:var(--muted-foreground); }
 .bb-plannotator-panel .bb-factory-details { padding:4px 10px 12px; }
