@@ -1,3 +1,5 @@
+/* BB's accent token is a subtle surface, while Plannotator uses it for comment text. */
+.bb-plannotator-panel, .bb-plannotator-portals { --annotation-comment: var(--foreground); color:var(--foreground); }
 .bb-plannotator-panel { display:flex; flex-direction:column; height:100%; min-height:0; color:var(--foreground); background:var(--background); font-family:var(--font-sans,system-ui); font-size:13px; }
 .bb-plannotator-panel button, .bb-plannotator-panel select { border:1px solid var(--border); border-radius:5px; padding:5px 8px; background:var(--card); color:var(--foreground); cursor:pointer; font:inherit; }
 .bb-plannotator-panel button:hover { background:var(--muted); }
